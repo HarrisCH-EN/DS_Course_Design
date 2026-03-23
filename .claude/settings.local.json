@@ -1,0 +1,15 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(cd:*)",
+      "Bash(npm run:*)",
+      "Bash(grep -E \"\\\\.\\(cpp|h|ts|tsx|json|txt\\)$\")",
+      "Bash(node scripts/test-api.js)",
+      "Bash(g++ -std=c++11 -O2 src/main.cpp src/graph/Graph.cpp src/algorithms/*.cpp src/io/FileIO.cpp src/ui/CLI.cpp -o network.exe)",
+      "Bash(g++ -std=c++11 test_extract.cpp -o test_extract.exe)",
+      "Bash(./test_extract.exe)",
+      "Bash(npx tsc:*)",
+      "Bash(wc:*)"
+    ]
+  }
+}

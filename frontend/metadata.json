@@ -1,0 +1,5 @@
+{
+  "name": "Network Design System",
+  "description": "A web application for designing and analyzing network topologies, including shortest path, TSP, and Steiner tree approximations.",
+  "requestFramePermissions": []
+}

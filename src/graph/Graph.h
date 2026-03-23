@@ -1,0 +1,44 @@
+#ifndef GRAPH_H
+#define GRAPH_H
+
+#include "City.h"
+#include "Edge.h"
+#include <vector>
+#include <map>
+#include <cmath>
+
+class Graph {
+private:
+    std::vector<City> cities;
+    std::map<int, int> cityIdToIndex;
+    std::vector<std::vector<std::pair<int, int>>> adjList;
+    std::vector<std::vector<int>> adjMatrix;
+
+public:
+    Graph();
+
+    void addCity(const City& city);
+    bool removeCity(int cityId);
+    bool updateCity(const City& city);
+
+    bool addEdge(int fromId, int toId);
+    bool removeEdge(int fromId, int toId);
+
+    City* getCityById(int id);
+    const City* getCityById(int id) const;
+    std::vector<City> getAllCities() const;
+    std::vector<Edge> getAllEdges() const;
+
+    int getDistance(int fromId, int toId) const;
+    int getCityCount() const;
+    int getEdgeCount() const;
+
+    int calculateDistance(int x1, int y1, int x2, int y2) const;
+
+    int cityIdToIdx(int cityId) const;
+    int idxToCityId(int idx) const;
+
+    void clearAll();  // 清空所有数据
+};
+
+#endif
