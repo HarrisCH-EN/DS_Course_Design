@@ -174,6 +174,14 @@ int Graph::calculateDistance(int x1, int y1, int x2, int y2) const {
     return static_cast<int>(std::round(dist));
 }
 
+const std::vector<std::pair<int, int>>& Graph::getNeighborsByIndex(int idx) const {
+    static const std::vector<std::pair<int, int>> empty;
+    if (idx < 0 || idx >= (int)adjList.size()) {
+        return empty;
+    }
+    return adjList[idx];
+}
+
 int Graph::cityIdToIdx(int cityId) const {
     auto it = cityIdToIndex.find(cityId);
     return (it != cityIdToIndex.end()) ? it->second : -1;

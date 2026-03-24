@@ -13,6 +13,9 @@ public:
     static std::vector<Edge> makeConnected(const Graph& graph);
 
 private:
+    // 构建基于索引的邻接表，避免重复计算
+    static std::vector<std::vector<std::pair<int, int>>> buildAdjList(const Graph& graph);
+
     static void dfs(int node, const std::vector<std::vector<std::pair<int, int>>>& adjList,
                     std::vector<bool>& visited);
 };

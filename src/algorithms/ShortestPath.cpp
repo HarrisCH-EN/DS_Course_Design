@@ -19,7 +19,8 @@ std::vector<PathResult> ShortestPath::dijkstraFromCity(const Graph& graph, int s
 
     dist[startIdx] = 0;
 
-    std::priority_queue<std::pair<int, int>, std::vector<std::pair<int, int>>, std::greater<std::pair<int, int>>> pq;
+    using P = std::pair<int, int>;
+    std::priority_queue<P, std::vector<P>, std::greater<P>> pq;
     pq.push({0, startIdx});
 
     while (!pq.empty()) {
@@ -29,11 +30,14 @@ std::vector<PathResult> ShortestPath::dijkstraFromCity(const Graph& graph, int s
         if (visited[u]) continue;
         visited[u] = true;
 
-        for (int v = 0; v < n; v++) {
-            int edgeDist = graph.getDistance(cities[u].id, cities[v].id);
-            if (edgeDist > 0 && !visited[v]) {
-                if (dist[u] + edgeDist < dist[v]) {
-                    dist[v] = dist[u] + edgeDist;
+        // ✅ 修复: 只遍历邻接节点，而非所有节点
+        const auto& neighbors = graph.getNeighborsByIndex(u);
+        for (const auto& neighbor : neighbors) {
+            int v = neighbor.first;
+            int w = neighbor.second;
+            if (!visited[v]) {
+                if (dist[u] + w < dist[v]) {
+                    dist[v] = dist[u] + w;
                     parent[v] = u;
                     pq.push({dist[v], v});
                 }

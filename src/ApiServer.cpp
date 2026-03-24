@@ -8,9 +8,10 @@
 #include <sstream>
 #include <iostream>
 
-ApiServer::ApiServer(const std::string& dataDir) 
+ApiServer::ApiServer(const std::string& dataDir)
     : dataDir(dataDir), nextCityId(1), nextRouteId(1) {
-    server = std::make_unique<SimpleHttpServer>(3001);
+    // C++11 compatible: use reset(new ...) instead of make_unique
+    server.reset(new SimpleHttpServer(3001));
     setupRoutes();
 }
 
@@ -523,7 +524,8 @@ bool ApiServer::saveData() {
 
 void ApiServer::start(int port) {
     std::cout << "API Server starting on port " << port << std::endl;
-    server = std::make_unique<SimpleHttpServer>(port);
+    // C++11 compatible: use reset(new ...) instead of make_unique
+    server.reset(new SimpleHttpServer(port));
     setupRoutes();
     server->start();
 }

@@ -51,30 +51,36 @@ TSPResult TSP::nearestNeighbor(const Graph& graph, int startCityId, bool returnT
         if (start == end) {
             return {{start}, 0};
         }
-        
+
         std::map<int, int> dist;
         std::map<int, int> parent;
-        std::priority_queue<std::pair<int, int>, std::vector<std::pair<int, int>>, std::greater<>> pq;
-        
+        // ✅ C++11兼容: std::greater需要指定类型
+        std::priority_queue<std::pair<int, int>, std::vector<std::pair<int, int>>, std::greater<std::pair<int, int>>> pq;
+
         for (const auto& city : allCities) {
             dist[city] = std::numeric_limits<int>::max();
         }
-        
+
         dist[start] = 0;
-        pq.push({0, start});
-        
+        pq.push(std::make_pair(0, start));
+
         while (!pq.empty()) {
-            auto [d, u] = pq.top();
+            std::pair<int, int> top = pq.top();
             pq.pop();
-            
+            int d = top.first;
+            int u = top.second;
+
             if (d > dist[u]) continue;
             if (u == end) break;
-            
-            for (const auto& [v, w] : adjList[u]) {
+
+            // ✅ C++11兼容: 避免结构化绑定
+            for (const auto& neighbor : adjList[u]) {
+                int v = neighbor.first;
+                int w = neighbor.second;
                 if (dist[u] + w < dist[v]) {
                     dist[v] = dist[u] + w;
                     parent[v] = u;
-                    pq.push({dist[v], v});
+                    pq.push(std::make_pair(dist[v], v));
                 }
             }
         }
@@ -113,8 +119,10 @@ TSPResult TSP::nearestNeighbor(const Graph& graph, int startCityId, bool returnT
         // 遍历所有未访问城市，找最近的
         for (int target : allCities) {
             if (visited.count(target)) continue;
-            
-            auto [pathToTarget, dist] = dijkstraFindPath(current, target);
+
+            std::pair<std::vector<int>, int> result = dijkstraFindPath(current, target);
+            std::vector<int> pathToTarget = result.first;
+            int dist = result.second;
             if (dist >= 0 && dist < minDist) {
                 minDist = dist;
                 nearest = target;
@@ -136,10 +144,12 @@ TSPResult TSP::nearestNeighbor(const Graph& graph, int startCityId, bool returnT
             break; // 无法到达更多城市
         }
     }
-    
+
     // 如果需要返回起点
     if (returnToStart && current != startCityId) {
-        auto [returnPath, returnDist] = dijkstraFindPath(current, startCityId);
+        std::pair<std::vector<int>, int> returnResult = dijkstraFindPath(current, startCityId);
+        std::vector<int> returnPath = returnResult.first;
+        int returnDist = returnResult.second;
         if (returnDist >= 0 && !returnPath.empty()) {
             for (size_t i = 1; i < returnPath.size(); i++) {
                 path.push_back(returnPath[i]);

@@ -2,6 +2,25 @@
 #include <algorithm>
 #include <limits>
 
+// 构建邻接表的辅助函数（所有城市必须是有效的图节点）
+std::vector<std::vector<std::pair<int, int>>> Connectivity::buildAdjList(const Graph& graph) {
+    int n = graph.getCityCount();
+    std::vector<City> cities = graph.getAllCities();
+    std::vector<std::vector<std::pair<int, int>>> adjList(n);
+
+    for (int i = 0; i < n; i++) {
+        for (int j = i + 1; j < n; j++) {
+            int dist = graph.getDistance(cities[i].id, cities[j].id);
+            if (dist > 0) {
+                adjList[i].push_back({j, dist});
+                adjList[j].push_back({i, dist});
+            }
+        }
+    }
+
+    return adjList;
+}
+
 void Connectivity::dfs(int node, const std::vector<std::vector<std::pair<int, int>>>& adjList,
                        std::vector<bool>& visited) {
     visited[node] = true;
@@ -16,18 +35,8 @@ bool Connectivity::isConnected(const Graph& graph) {
     int n = graph.getCityCount();
     if (n == 0) return true;
 
-    std::vector<City> cities = graph.getAllCities();
-    std::vector<std::vector<std::pair<int, int>>> adjList(n);
-
-    for (int i = 0; i < n; i++) {
-        for (int j = i + 1; j < n; j++) {
-            int dist = graph.getDistance(cities[i].id, cities[j].id);
-            if (dist > 0) {
-                adjList[i].push_back({j, dist});
-                adjList[j].push_back({i, dist});
-            }
-        }
-    }
+    // ✅ 优化: 复用邻接表构建
+    std::vector<std::vector<std::pair<int, int>>> adjList = buildAdjList(graph);
 
     std::vector<bool> visited(n, false);
     dfs(0, adjList, visited);
@@ -40,18 +49,8 @@ bool Connectivity::isConnected(const Graph& graph) {
 
 std::vector<std::vector<int>> Connectivity::findConnectedComponents(const Graph& graph) {
     int n = graph.getCityCount();
-    std::vector<City> cities = graph.getAllCities();
-    std::vector<std::vector<std::pair<int, int>>> adjList(n);
-
-    for (int i = 0; i < n; i++) {
-        for (int j = i + 1; j < n; j++) {
-            int dist = graph.getDistance(cities[i].id, cities[j].id);
-            if (dist > 0) {
-                adjList[i].push_back({j, dist});
-                adjList[j].push_back({i, dist});
-            }
-        }
-    }
+    // ✅ 优化: 复用邻接表构建
+    std::vector<std::vector<std::pair<int, int>>> adjList = buildAdjList(graph);
 
     std::vector<bool> visited(n, false);
     std::vector<std::vector<int>> components;

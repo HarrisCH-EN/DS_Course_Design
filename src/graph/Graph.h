@@ -30,6 +30,10 @@ public:
     std::vector<Edge> getAllEdges() const;
 
     int getDistance(int fromId, int toId) const;
+
+    // 获取节点的邻接列表（索引和权重），用于高效的图遍历
+    const std::vector<std::pair<int, int>>& getNeighborsByIndex(int idx) const;
+
     int getCityCount() const;
     int getEdgeCount() const;
 
