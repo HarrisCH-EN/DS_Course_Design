@@ -416,6 +416,7 @@ void CLI::makeConnectedMenu() {
         for (const auto& edge : newEdges) {
             graph.addEdge(edge.from, edge.to);
         }
+        FileIO::saveAllJSON(graph, cityFile, routeFile);
         std::cout << "\n√ 线路已添加成功！\n";
     }
 }
