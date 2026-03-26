@@ -281,14 +281,14 @@ TSPResult TSP::nearestNeighbor(const Graph& graph, int startCityId, bool returnT
         int minDist = std::numeric_limits<int>::max();
         std::vector<int> bestPath;
 
-        // 遍历所有未访问城市，找最近的
+        // 遍历所有未访问城市，找最近的（距离相同时选ID最小的）
         for (int target : allCities) {
             if (visited.count(target)) continue;
 
             std::pair<std::vector<int>, int> result = dijkstraFindPath(current, target);
             std::vector<int> pathToTarget = result.first;
             int dist = result.second;
-            if (dist >= 0 && dist < minDist) {
+            if (dist >= 0 && (dist < minDist || (dist == minDist && target < nearest))) {
                 minDist = dist;
                 nearest = target;
                 bestPath = pathToTarget;

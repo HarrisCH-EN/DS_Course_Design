@@ -10,7 +10,9 @@ struct Edge {
     Edge(int from, int to, int length) : from(from), to(to), length(length) {}
 
     bool operator<(const Edge& other) const {
-        return length < other.length;
+        if (length != other.length) return length < other.length;
+        if (from != other.from) return from < other.from;
+        return to < other.to;
     }
 };
 

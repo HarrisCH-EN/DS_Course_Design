@@ -616,13 +616,30 @@ void CLI::steinerTreeMenu() {
         std::cout << "总布线长度: " << result.totalDistance << " km" << std::endl;
 
         if (!result.steinerPoints.empty()) {
-            std::cout << "\n" << std::string(70, '-') << std::endl;
-            std::cout << "施泰纳点(Steiner 点)信息：" << std::endl;
-            std::cout << std::string(70, '-') << std::endl;
-            for (const auto& point : result.steinerPoints) {
-                std::cout << "  位置: (" << point.x << ", " << point.y
-                          << ") - 连接了三个方向的线路" << std::endl;
+            std::cout << "\n╔══════════════════════════════════════════════════════════════════════╗" << std::endl;
+            std::cout << "║                        施泰纳辅助点信息                              ║" << std::endl;
+            std::cout << "╚══════════════════════════════════════════════════════════════════════╝" << std::endl;
+
+            int indexWidth = 8;
+            int coordWidth = 20;
+            int noteWidth = 24;
+
+            std::vector<std::string> headers = {"序号", "坐标", "说明"};
+            std::vector<int> widths = {indexWidth, coordWidth, noteWidth};
+
+            printTableHeader(headers, widths);
+
+            for (size_t i = 0; i < result.steinerPoints.size(); ++i) {
+                const auto& point = result.steinerPoints[i];
+                std::vector<std::string> row;
+                row.push_back(std::to_string(i + 1));
+                row.push_back("(" + std::to_string(point.x) + ", " + std::to_string(point.y) + ")");
+                row.push_back("三向连接点");
+                printTableRow(row, widths);
             }
+
+            printTableLine(0);
+            std::cout << "\n辅助点总数: " << result.steinerPoints.size() << " 个" << std::endl;
         }
     }
 }
