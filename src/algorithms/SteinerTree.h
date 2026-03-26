@@ -6,13 +6,20 @@
 #include <map>
 
 struct SteinerPoint {
+    int id;        // 负ID
     double x;
     double y;
 };
 
+struct SteinerTreeResult {
+    std::vector<Edge> edges;
+    std::vector<SteinerPoint> steinerPoints;
+    int totalDistance;
+};
+
 class SteinerTree {
 public:
-    static std::vector<Edge> solve(const Graph& graph);
+    static SteinerTreeResult solve(const Graph& graph);
 
     static int getTotalLength(const std::vector<Edge>& edges);
 

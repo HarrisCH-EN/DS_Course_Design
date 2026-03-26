@@ -1,6 +1,6 @@
 @echo off
 echo Starting Backend Server...
-start /b build\network_api.exe --server --port 3001 --data data
+start /b build\network.exe --server --port 3001 --data data
 
 echo Starting Frontend Server...
 cd frontend

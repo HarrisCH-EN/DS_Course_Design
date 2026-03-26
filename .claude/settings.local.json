@@ -20,7 +20,21 @@
       "Bash(./test_optimized.exe)",
       "Bash(g++ -std=c++11 -O2 -I src test_optimized.cpp src/graph/Graph.cpp src/algorithms/ShortestPath.cpp src/algorithms/MST.cpp src/algorithms/Connectivity.cpp -o test_optimized.exe)",
       "Bash(g++ -std=c++11 -O2 -I src benchmark_optimized.cpp src/graph/Graph.cpp src/algorithms/ShortestPath.cpp -o benchmark.exe)",
-      "Bash(./benchmark.exe)"
+      "Bash(./benchmark.exe)",
+      "Bash(\"D:\\\\Professional_Softwares\\\\C_CPP\\\\mingw64\\\\bin\\\\g++.exe\" -std=c++11 -O2 src/main.cpp src/graph/Graph.cpp src/algorithms/*.cpp src/io/FileIO.cpp src/ui/CLI.cpp -o network.exe)",
+      "Bash(\"D:\\\\Professional_Softwares\\\\C_CPP\\\\mingw64\\\\bin\\\\g++.exe\" -std=c++11 -c src/algorithms/TSP.cpp -o src/algorithms/TSP.o)",
+      "Bash(\"D:\\\\Professional_Softwares\\\\C_CPP\\\\mingw64\\\\bin\\\\g++.exe\" -std=c++11 -c src/algorithms/SteinerTree.cpp -o src/algorithms/SteinerTree.o)",
+      "Bash(ls -la src/*.cpp src/**/*.cpp)",
+      "Bash(g++ -std=c++11 -O2 src/main.cpp src/ApiServer.cpp src/SimpleHttpServer.cpp src/graph/Graph.cpp src/algorithms/*.cpp src/io/FileIO.cpp src/ui/CLI.cpp -o network.exe 2>&1)",
+      "Bash(./build/bin/network.exe)",
+      "Bash(touch data/test_write.tmp)",
+      "Bash(rm data/test_write.tmp)",
+      "Bash(g++ -std=c++11 -O2 src/main.cpp src/ApiServer.cpp src/SimpleHttpServer.cpp src/graph/Graph.cpp src/algorithms/*.cpp src/io/FileIO.cpp src/ui/CLI.cpp -o build/bin/network.exe -lws2_32 2>&1)",
+      "Bash(\"D:/Professional_Softwares/C_CPP/mingw64/bin/g++.exe\" -std=c++11 -O2 src/main.cpp src/graph/Graph.cpp src/algorithms/*.cpp src/io/FileIO.cpp src/ui/CLI.cpp -o network.exe)",
+      "Bash(\"D:/Professional_Softwares/C_CPP/mingw64/bin/g++.exe\" -std=c++11 -O2 src/main.cpp src/graph/Graph.cpp src/algorithms/*.cpp src/io/FileIO.cpp src/ui/CLI.cpp src/ApiServer.cpp -o network.exe)",
+      "Bash(\"D:/Professional_Softwares/C_CPP/mingw64/bin/g++.exe\" -std=c++11 -O2 src/main.cpp src/graph/Graph.cpp src/algorithms/*.cpp src/io/FileIO.cpp src/ui/CLI.cpp src/ApiServer.cpp src/SimpleHttpServer.cpp -o build/network.exe)",
+      "Bash(g++ -std=c++11 -O2 src/main.cpp src/graph/Graph.cpp src/algorithms/*.cpp src/io/FileIO.cpp -o build/network.exe 2>&1)",
+      "Bash(g++ -std=c++11 -O2 src/main.cpp src/io/FileIO.cpp src/graph/Graph.cpp src/algorithms/Connectivity.cpp src/algorithms/ShortestPath.cpp src/algorithms/TSP.cpp src/algorithms/MST.cpp src/algorithms/SteinerTree.cpp src/ui/CLI.cpp -o build/network.exe 2>&1)"
     ]
   }
 }
