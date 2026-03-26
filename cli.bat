@@ -1,6 +1,6 @@
 @echo off
 chcp 65001 >nul
-title NetPlan Pro - CLI
+title NetMap Studio - CLI
 
 cd /d "%~dp0"
 build\network.exe --data data
