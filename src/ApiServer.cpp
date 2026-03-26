@@ -411,8 +411,9 @@ void ApiServer::setupRoutes() {
 
     // GET /api/analyze/steiner
     server->Get("/api/analyze/steiner", [this](const std::string& body) {
-        std::vector<Edge> edges = SteinerTree::solve(graph);
-        int totalDistance = SteinerTree::getTotalLength(edges);
+        SteinerTreeResult result = SteinerTree::solve(graph);
+        std::vector<Edge> edges = result.edges;
+        int totalDistance = result.totalDistance;
         
         std::string json = "{\"edges\":[";
         for (size_t i = 0; i < edges.size(); i++) {

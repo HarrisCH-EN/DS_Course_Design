@@ -34,7 +34,9 @@
       "Bash(\"D:/Professional_Softwares/C_CPP/mingw64/bin/g++.exe\" -std=c++11 -O2 src/main.cpp src/graph/Graph.cpp src/algorithms/*.cpp src/io/FileIO.cpp src/ui/CLI.cpp src/ApiServer.cpp -o network.exe)",
       "Bash(\"D:/Professional_Softwares/C_CPP/mingw64/bin/g++.exe\" -std=c++11 -O2 src/main.cpp src/graph/Graph.cpp src/algorithms/*.cpp src/io/FileIO.cpp src/ui/CLI.cpp src/ApiServer.cpp src/SimpleHttpServer.cpp -o build/network.exe)",
       "Bash(g++ -std=c++11 -O2 src/main.cpp src/graph/Graph.cpp src/algorithms/*.cpp src/io/FileIO.cpp -o build/network.exe 2>&1)",
-      "Bash(g++ -std=c++11 -O2 src/main.cpp src/io/FileIO.cpp src/graph/Graph.cpp src/algorithms/Connectivity.cpp src/algorithms/ShortestPath.cpp src/algorithms/TSP.cpp src/algorithms/MST.cpp src/algorithms/SteinerTree.cpp src/ui/CLI.cpp -o build/network.exe 2>&1)"
+      "Bash(g++ -std=c++11 -O2 src/main.cpp src/io/FileIO.cpp src/graph/Graph.cpp src/algorithms/Connectivity.cpp src/algorithms/ShortestPath.cpp src/algorithms/TSP.cpp src/algorithms/MST.cpp src/algorithms/SteinerTree.cpp src/ui/CLI.cpp -o build/network.exe 2>&1)",
+      "Bash(g++ -std=c++11 -O2 src/main.cpp src/graph/Graph.cpp src/algorithms/*.cpp src/io/FileIO.cpp src/ui/CLI.cpp -o build/network.exe -static-libgcc -static-libstdc++)",
+      "Bash(./build/network.exe)"
     ]
   }
 }
