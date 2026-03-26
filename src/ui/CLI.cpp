@@ -615,11 +615,13 @@ void CLI::steinerTreeMenu() {
         std::cout << "\n线路总数: " << result.edges.size() << " 条" << std::endl;
         std::cout << "总布线长度: " << result.totalDistance << " km" << std::endl;
 
-        if (!result.steinerPoints.empty()) {
-            std::cout << "\n╔══════════════════════════════════════════════════════════════════════╗" << std::endl;
-            std::cout << "║                        施泰纳辅助点信息                              ║" << std::endl;
-            std::cout << "╚══════════════════════════════════════════════════════════════════════╝" << std::endl;
+        std::cout << "\n╔══════════════════════════════════════════════════════════════════════╗" << std::endl;
+        std::cout << "║                        施泰纳辅助点信息                              ║" << std::endl;
+        std::cout << "╚══════════════════════════════════════════════════════════════════════╝" << std::endl;
 
+        if (result.steinerPoints.empty()) {
+            std::cout << "\n本方案无需添加辅助点，直接连接城市即可达到最优。\n";
+        } else {
             int indexWidth = 8;
             int coordWidth = 20;
             int noteWidth = 24;

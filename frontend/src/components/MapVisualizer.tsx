@@ -720,6 +720,12 @@ export default function MapVisualizer({
               {/* 城市详细信息 */}
               <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', fontSize: '12px' }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                  <span style={{ color: '#94a3b8' }}>ID</span>
+                  <span style={{ fontFamily: 'SF Mono, Monaco, monospace', color: '#475569', fontSize: '11px' }}>
+                    {displayedCity.id}
+                  </span>
+                </div>
+                <div style={{ display: 'flex', justifyContent: 'space-between' }}>
                   <span style={{ color: '#94a3b8' }}>坐标</span>
                   <span style={{ fontFamily: 'SF Mono, Monaco, monospace', color: '#475569', fontSize: '11px' }}>
                     ({displayedCity.x}, {displayedCity.y})
@@ -814,6 +820,12 @@ export default function MapVisualizer({
                 </div>
                 {/* 线路详细信息 */}
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', fontSize: '12px' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                    <span style={{ color: '#94a3b8' }}>ID</span>
+                    <span style={{ fontFamily: 'SF Mono, Monaco, monospace', color: '#475569', fontSize: '11px' }}>
+                      {displayedRoute.id}
+                    </span>
+                  </div>
                   <div style={{ display: 'flex', justifyContent: 'space-between' }}>
                     <span style={{ color: '#94a3b8' }}>距离</span>
                     <span style={{ fontFamily: 'SF Mono, Monaco, monospace', color: '#475569', fontSize: '11px' }}>

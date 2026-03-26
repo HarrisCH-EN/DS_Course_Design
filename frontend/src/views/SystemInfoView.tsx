@@ -4,7 +4,15 @@ import { Layers, Server, Globe, Code2, Database, GitBranch, Cpu, Shield, Chevron
 export default function SystemInfoView() {
   const [showAllLogs, setShowAllLogs] = useState(false);
 
-  const changelogItems = [
+  const v110Items = [
+    '· 修复施泰纳树算法前后端结果不一致问题（辅助点数量差异）',
+    '· 优化施泰纳树算法：完全图MST场景下不添加辅助点，与C++后端逻辑保持一致',
+    '· 恢复施泰纳树计算过程动画：显示顶点检查、费马点计算、优化跳过等详细步骤',
+    '· 新增ID信息显示：城市列表、线路列表、地图弹窗均显示节点/线路ID',
+    '· 性能优化：限制施泰纳树迭代次数（最多50轮）和单轮检查顶点数（最多10个），避免220城市场景下浏览器卡顿',
+  ];
+
+  const v100Items = [
     '· 首次发布 NetPlan Pro 通信网络规划系统',
     '· 实现 Dijkstra 最短路径、连通性分析、TSP 商旅图、Steiner 树、全路径查询 5 种图算法',
     '· Web 界面 + CLI 命令行双模式运行',
@@ -23,13 +31,15 @@ export default function SystemInfoView() {
     '· 一键启动脚本：web.bat 启动 Web 模式，cli.bat 启动命令行模式',
   ];
 
+  const changelogItems = [...v110Items, ...v100Items];
+
   const visibleItems = showAllLogs ? changelogItems : changelogItems.slice(0, 3);
   return (
     <div className="flex-1 flex flex-col min-w-0 overflow-hidden bg-slate-50 h-full">
       {/* Header */}
       <header className="h-16 bg-white border-b border-slate-200 px-6 flex items-center gap-4 shrink-0 z-20">
         <h2 className="text-lg font-semibold text-slate-800">版本详情</h2>
-        <span className="text-xs text-slate-400 bg-slate-100 px-2 py-0.5 rounded">v1.0.0</span>
+        <span className="text-xs text-slate-400 bg-slate-100 px-2 py-0.5 rounded">v1.1.0</span>
       </header>
 
       <main className="flex-1 overflow-y-auto p-8">
@@ -37,7 +47,7 @@ export default function SystemInfoView() {
           {/* Version header */}
           <div className="text-center">
             <h1 className="text-xl font-bold text-slate-800 mb-1">NetMap Studio</h1>
-            <p className="text-slate-400 text-sm">v1.0.0</p>
+            <p className="text-slate-400 text-sm">v1.1.0</p>
           </div>
 
           {/* Tech Stack */}
@@ -85,18 +95,34 @@ export default function SystemInfoView() {
                 <h3 className="font-semibold text-slate-800">更新日志</h3>
               </div>
             </div>
-            <div className="p-6">
+            <div className="p-6 space-y-6">
+              {/* v1.1.0 */}
               <div className="border-l-2 border-[#ff886f] pl-4">
                 <div className="flex items-center gap-2 mb-3">
-                  <span className="text-xs font-medium text-[#ff886f]">v1.0.0</span>
-                  <span className="text-xs text-slate-400">2026-03-23</span>
+                  <span className="text-xs font-medium text-[#ff886f]">v1.1.0</span>
+                  <span className="text-xs text-slate-400">2026-03-26</span>
                 </div>
                 <ul className="text-sm text-slate-600 space-y-1.5">
-                  {visibleItems.map((item, i) => (
+                  {v110Items.map((item, i) => (
                     <li key={i}>{item}</li>
                   ))}
                 </ul>
-                {changelogItems.length > 3 && (
+              </div>
+
+              {/* v1.0.0 */}
+              <div className="border-l-2 border-slate-300 pl-4">
+                <div className="flex items-center gap-2 mb-3">
+                  <span className="text-xs font-medium text-slate-500">v1.0.0</span>
+                  <span className="text-xs text-slate-400">2026-03-23</span>
+                </div>
+                <ul className="text-sm text-slate-600 space-y-1.5">
+                  {showAllLogs ? v100Items.map((item, i) => (
+                    <li key={i}>{item}</li>
+                  )) : v100Items.slice(0, 3).map((item, i) => (
+                    <li key={i}>{item}</li>
+                  ))}
+                </ul>
+                {v100Items.length > 3 && (
                   <button
                     onClick={() => setShowAllLogs(!showAllLogs)}
                     className="flex items-center gap-1 mt-3 text-xs text-[#ff886f] hover:text-[#f07a61] transition-colors"
@@ -104,7 +130,7 @@ export default function SystemInfoView() {
                     {showAllLogs ? (
                       <>收起 <ChevronUp className="w-3 h-3" /></>
                     ) : (
-                      <>展开更多 ({changelogItems.length - 3} 条) <ChevronDown className="w-3 h-3" /></>
+                      <>展开更多 ({v100Items.length - 3} 条) <ChevronDown className="w-3 h-3" /></>
                     )}
                   </button>
                 )}

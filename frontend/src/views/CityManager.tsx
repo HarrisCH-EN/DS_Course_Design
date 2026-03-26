@@ -330,6 +330,7 @@ export default function CityManager({ cities, routes, onUpdate }: { cities: City
                         <div>
                           <div className="flex items-center space-x-2 text-sm font-medium">
                             <span>{c.name}</span>
+                            <span className="text-[10px] text-slate-400 font-normal">ID:{c.id}</span>
                           </div>
                           <div className="flex items-center gap-2 mt-1">
                             <span className={`text-[10px] px-1.5 py-0.5 rounded font-medium ${c.description?.includes('省会') || c.description?.includes('直辖市') ? 'bg-blue-50 text-[#1c85e8]' : 'bg-[#fff5f2] text-[#ff886f]'}`}>

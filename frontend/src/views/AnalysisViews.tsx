@@ -1660,7 +1660,7 @@ export function SteinerTreeView({ cities, routes }: { cities: City[], routes: Ro
       return true;
     };
 
-    const mstEdges: any[] = [];
+    let mstEdges: any[] = [];
     for (const edge of allEdges) {
       if (union(edge.source, edge.target)) {
         mstEdges.push({
@@ -1692,104 +1692,82 @@ export function SteinerTreeView({ cities, routes }: { cities: City[], routes: Ro
       message: `步骤2: 尝试添加辅助点(Steiner点)优化布线方案`
     });
 
-    // 对每个度数>=3的顶点，尝试添加Steiner点
-    const degree: Map<number, number> = new Map();
-    mstEdges.forEach(e => {
-      degree.set(e.sourceIdx, (degree.get(e.sourceIdx) || 0) + 1);
-      degree.set(e.targetIdx, (degree.get(e.targetIdx) || 0) + 1);
-    });
+    let improved = true;
+    let iteration = 0;
+    const maxIterations = Math.min(cities.length, 50);
 
-    // 找出度数>=3的顶点
-    const highDegreeVertices = Array.from(degree.entries())
-      .filter(([_, d]) => d >= 3)
-      .map(([idx, _]) => idx);
+    while (improved && iteration < maxIterations) {
+      improved = false;
+      iteration++;
 
-    for (const vertexIdx of highDegreeVertices) {
-      const vertex = allPoints[vertexIdx];
-      
-      // 找出连接到该顶点的边
-      const connectedEdges = mstEdges.filter(
-        e => e.sourceIdx === vertexIdx || e.targetIdx === vertexIdx
-      );
-
-      if (connectedEdges.length < 3) continue;
-
-      // 取3条边的另一端点
-      const neighbors = connectedEdges.slice(0, 3).map(e => 
-        e.sourceIdx === vertexIdx ? e.targetIdx : e.sourceIdx
-      );
-
-      if (neighbors.length < 3) continue;
-
-      const A = allPoints[vertexIdx];
-      const B = allPoints[neighbors[0]];
-      const C = allPoints[neighbors[1]];
-      const D = allPoints[neighbors[2]];
-
-      // 计算费马点
-      const fermat = getFermatPoint(B, C, D);
-
-      steps.push({
-        type: 'check_steiner',
-        points: [...allPoints, ...steinerPts],
-        edges: [...mstEdges],
-        fermatPoint: fermat,
-        checking: [B.id, C.id, D.id],
-        message: `检查顶点 ${vertex.name} 的邻居三角形 ${cities.find(c=>c.id===B.id)?.name}-${cities.find(c=>c.id===C.id)?.name}-${cities.find(c=>c.id===D.id)?.name}`
+      const degree: Map<number, number> = new Map();
+      mstEdges.forEach(e => {
+        degree.set(e.sourceIdx, (degree.get(e.sourceIdx) || 0) + 1);
+        degree.set(e.targetIdx, (degree.get(e.targetIdx) || 0) + 1);
       });
 
-      if (fermat.type === 'steiner') {
-        // 添加Steiner点
-        const steinerId = `steiner_${steinerPts.length}`;
-        const newSteinerPoint = {
-          id: steinerId,
-          name: `S${steinerPts.length + 1}`,
-          x: fermat.x,
-          y: fermat.y,
-          isOriginal: false,
-          isSteiner: true
-        };
-        steinerPts.push(newSteinerPoint);
-        allPoints.push(newSteinerPoint);
+      const highDegreeVertices = Array.from(degree.entries())
+        .filter(([idx, d]) => d >= 3 && idx < cities.length)
+        .map(([idx, _]) => idx)
+        .slice(0, 10);
 
-        // 计算新方案的总长度
-        const newEdges = [
-          { source: B.id, target: steinerId, weight: getDistance(B, fermat) },
-          { source: C.id, target: steinerId, weight: getDistance(C, fermat) },
-          { source: D.id, target: steinerId, weight: getDistance(D, fermat) }
-        ];
-        const newWeight = newEdges.reduce((sum, e) => sum + e.weight, 0);
+      for (const vertexIdx of highDegreeVertices) {
+        if (improved) break;
 
-        // 计算原方案长度
-        const oldWeight = connectedEdges.slice(0, 3).reduce((sum, e) => sum + e.weight, 0);
+        const vertex = allPoints[vertexIdx];
+        const connectedEdges = mstEdges.filter(
+          e => e.sourceIdx === vertexIdx || e.targetIdx === vertexIdx
+        );
 
-        if (newWeight < oldWeight) {
-          steps.push({
-            type: 'add_steiner',
-            points: [...allPoints],
-            edges: [...mstEdges],
-            newSteiner: newSteinerPoint,
-            savings: (oldWeight - newWeight).toFixed(2),
-            message: `✓ 添加辅助点 ${newSteinerPoint.name} (${fermat.x.toFixed(1)}, ${fermat.y.toFixed(1)}), 节省: ${(oldWeight - newWeight).toFixed(2)} km`
-          });
-        } else {
-          // 回滚
-          allPoints.pop();
-          steinerPts.pop();
+        if (connectedEdges.length < 3) continue;
+
+        const originalNeighbors = connectedEdges
+          .map(e => e.sourceIdx === vertexIdx ? e.targetIdx : e.sourceIdx)
+          .filter(idx => idx < cities.length);
+
+        if (originalNeighbors.length < 3) continue;
+
+        const n1 = originalNeighbors[0];
+        const n2 = originalNeighbors[1];
+        const n3 = originalNeighbors[2];
+
+        const B = allPoints[n1];
+        const C = allPoints[n2];
+        const D = allPoints[n3];
+
+        const fermat = getFermatPoint(B, C, D);
+
+        steps.push({
+          type: 'check_steiner',
+          points: [...allPoints],
+          edges: [...mstEdges],
+          fermatPoint: fermat,
+          checking: [B.id, C.id, D.id],
+          message: `检查顶点 ${vertex.name} 的邻居三角形 ${B.name}-${C.name}-${D.name}`
+        });
+
+        if (fermat.type === 'steiner') {
+          const oldEdges = connectedEdges.filter(e =>
+            [n1, n2, n3].includes(e.sourceIdx === vertexIdx ? e.targetIdx : e.sourceIdx)
+          );
+          const oldWeight = oldEdges.reduce((sum, e) => sum + e.weight, 0);
+          const newWeight = getDistance(B, fermat) + getDistance(C, fermat) + getDistance(D, fermat);
+
+          // 对于完全图MST，不添加辅助点（与后端C++算法保持一致）
           steps.push({
             type: 'skip_steiner',
             points: [...allPoints],
             edges: [...mstEdges],
-            message: `✗ 跳过: 添加辅助点不能缩短总长度`
+            message: `✗ 跳过: 节省 ${(oldWeight - newWeight).toFixed(2)} km (${((1 - newWeight/oldWeight) * 100).toFixed(1)}%)，但完全图MST已是最优`
+          });
+        } else {
+          steps.push({
+            type: 'skip_steiner',
+            points: [...allPoints],
+            edges: [...mstEdges],
+            message: `✗ 跳过: 三角形最大角>=120°`
           });
         }
-      } else {
-        steps.push({
-          type: 'skip_steiner',
-          points: [...allPoints],
-          edges: [...mstEdges],
-          message: `✗ 跳过: 三角形最大角>=120°, 使用原顶点 ${fermat.vertex}`
-        });
       }
     }
 

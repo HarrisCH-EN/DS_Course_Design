@@ -139,6 +139,7 @@ SteinerTreeResult SteinerTree::solve(const Graph& graph) {
     }
 
     // Step 2: Try to optimize using Fermat points
+    std::map<int, std::pair<double, double>> steinerPointMap;
     bool improved = true;
     int maxIterations = n * 10;
     int iteration = 0;
@@ -238,20 +239,13 @@ SteinerTreeResult SteinerTree::solve(const Graph& graph) {
                         newEdges.push_back(Edge(n2, fermatId, (int)std::round(d2)));
                         newEdges.push_back(Edge(n3, fermatId, (int)std::round(d3)));
 
-                        // 记录Steiner点
-                        SteinerPoint sp;
-                        sp.id = fermatId;
-                        sp.x = fermat.x;
-                        sp.y = fermat.y;
-                        steinerPoints.push_back(sp);
-
                         // 验证连通性
                         if (!isConnected(newEdges, cityIdSet)) {
-                            steinerPoints.pop_back();
                             continue;
                         }
 
                         bestEdges = newEdges;
+                        steinerPointMap[fermatId] = std::make_pair(fermat.x, fermat.y);
                         improved = true;
                         cityImproved = true;
                         break;
@@ -266,7 +260,16 @@ SteinerTreeResult SteinerTree::solve(const Graph& graph) {
     // 最终验证
     if (!isConnected(bestEdges, cityIdSet)) {
         bestEdges = MST::kruskal(graph);
-        steinerPoints.clear();
+        steinerPointMap.clear();
+    }
+
+    // 从最终边集提取Steiner点
+    for (const auto& kv : steinerPointMap) {
+        SteinerPoint sp;
+        sp.id = kv.first;
+        sp.x = kv.second.first;
+        sp.y = kv.second.second;
+        steinerPoints.push_back(sp);
     }
 
     result.edges = bestEdges;

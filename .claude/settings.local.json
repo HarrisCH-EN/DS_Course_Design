@@ -39,7 +39,9 @@
       "Bash(./build/network.exe)",
       "Bash(ls -la /e/C_CPP/DS_Course_Design/*.json)",
       "Bash(\"D:\\\\Professional_Softwares\\\\C_CPP\\\\mingw64\\\\bin\\\\g++.exe\" -std=c++11 -O2 src/main.cpp src/graph/Graph.cpp src/algorithms/*.cpp src/io/FileIO.cpp src/ui/CLI.cpp -o network_json.exe)",
-      "Bash(\"D:\\\\Professional_Softwares\\\\C_CPP\\\\mingw64\\\\bin\\\\g++.exe\" -std=c++11 -O2 src/main.cpp src/graph/Graph.cpp src/algorithms/*.cpp src/io/FileIO.cpp src/ui/CLI.cpp src/ApiServer.cpp src/SimpleHttpServer.cpp -o network_json.exe -lws2_32)"
+      "Bash(\"D:\\\\Professional_Softwares\\\\C_CPP\\\\mingw64\\\\bin\\\\g++.exe\" -std=c++11 -O2 src/main.cpp src/graph/Graph.cpp src/algorithms/*.cpp src/io/FileIO.cpp src/ui/CLI.cpp src/ApiServer.cpp src/SimpleHttpServer.cpp -o network_json.exe -lws2_32)",
+      "Bash(\"D:\\\\Professional_Softwares\\\\C_CPP\\\\mingw64\\\\bin\\\\g++.exe\" -std=c++11 -O2 src/main.cpp src/graph/Graph.cpp src/algorithms/*.cpp src/io/FileIO.cpp src/ui/CLI.cpp src/ApiServer.cpp src/SimpleHttpServer.cpp -o network.exe -lws2_32)",
+      "Bash(./network.exe)"
     ]
   }
 }

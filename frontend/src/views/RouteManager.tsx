@@ -221,7 +221,10 @@ export default function RouteManager({ cities, routes, onUpdate }: { cities: Cit
                           <ArrowRight className="text-slate-400 h-3 w-3" />
                           <span>{c2.name}</span>
                         </div>
-                        <div className="text-[10px] text-slate-400 mt-1">{distance} km</div>
+                        <div className="flex items-center gap-2 mt-1">
+                          <span className="text-[10px] text-slate-400">{distance} km</span>
+                          <span className="text-[10px] text-slate-400">ID:{r.id}</span>
+                        </div>
                       </div>
                       <button
                         onClick={(e) => { e.stopPropagation(); handleDelete(r.id); }}
