@@ -18,6 +18,6 @@ echo Press any key to stop all servers...
 pause > nul
 
 echo Stopping servers...
-taskkill /F /IM network_api.exe 2>nul
+taskkill /F /IM network.exe 2>nul
 taskkill /F /IM node.exe 2>nul
 echo Done.

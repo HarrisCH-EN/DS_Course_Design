@@ -246,7 +246,7 @@ bool FileIO::saveCitiesJSON(const Graph& graph, const std::string& filename) {
         file << "    \"id\": \"" << city.id << "\",\n";
         file << "    \"name\": \"" << city.name << "\",\n";
         file << "    \"x\": " << city.x << ",\n";
-        file << "    \"y\": " << -city.y << ",\n";  // Y轴取反
+        file << "    \"y\": " << city.y << ",\n";
         file << "    \"description\": \"" << city.description << "\"\n";
         file << "  }";
         if (i < cities.size() - 1) file << ",";
@@ -285,4 +285,58 @@ bool FileIO::saveRoutesJSON(const Graph& graph, const std::string& filename) {
 
 bool FileIO::saveAllJSON(const Graph& graph, const std::string& cityFile, const std::string& routeFile) {
     return saveCitiesJSON(graph, cityFile) && saveRoutesJSON(graph, routeFile);
+}
+
+// ==================== JSON 字符串解析（CLI 输入）====================
+
+bool FileIO::parseCityFromJSON(const std::string& jsonStr, City& outCity) {
+    std::string trimmed = trim(jsonStr);
+
+    if (trimmed.empty() || trimmed.find("{") == std::string::npos) {
+        return false;
+    }
+
+    std::string idStr = extractValue(trimmed, "id");
+    std::string nameStr = extractValue(trimmed, "name");
+    std::string xStr = extractValue(trimmed, "x");
+    std::string yStr = extractValue(trimmed, "y");
+    std::string descStr = extractValue(trimmed, "description");
+
+    if (idStr.empty() || nameStr.empty() || xStr.empty() || yStr.empty()) {
+        return false;
+    }
+
+    try {
+        outCity.id = std::stoi(idStr);
+        outCity.name = nameStr;
+        outCity.x = std::stoi(xStr);
+        outCity.y = std::stoi(yStr);
+        outCity.description = descStr.empty() ? "" : descStr;
+        return true;
+    } catch (...) {
+        return false;
+    }
+}
+
+bool FileIO::parseEdgeFromJSON(const std::string& jsonStr, int& outFrom, int& outTo) {
+    std::string trimmed = trim(jsonStr);
+
+    if (trimmed.empty() || trimmed.find("{") == std::string::npos) {
+        return false;
+    }
+
+    std::string sourceStr = extractValue(trimmed, "source");
+    std::string targetStr = extractValue(trimmed, "target");
+
+    if (sourceStr.empty() || targetStr.empty()) {
+        return false;
+    }
+
+    try {
+        outFrom = std::stoi(sourceStr);
+        outTo = std::stoi(targetStr);
+        return true;
+    } catch (...) {
+        return false;
+    }
 }

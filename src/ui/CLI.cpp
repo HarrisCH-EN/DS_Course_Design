@@ -68,8 +68,7 @@ void CLI::displayMenu() {
     std::cout << "9. 查询最短路径\n";
     std::cout << "10. 旅行商问题求解\n";
     std::cout << "11. 施泰纳树问题求解\n";
-    std::cout << "12. 保存数据\n";
-    std::cout << "13. 加载数据\n";
+    std::cout << "12. 加载数据\n";
     std::cout << "0. 退出\n";
     std::cout << "请选择: ";
 }
@@ -80,19 +79,43 @@ void CLI::addCityMenu() {
 
     std::cout << "\n=== 添加城市 ===\n";
     std::cout << "城市编号: ";
-    std::cin >> id;
+    if (!(std::cin >> id) || id <= 0) {
+        std::cin.clear();
+        std::cin.ignore(10000, '\n');
+        std::cout << "错误：编号必须是正整数！\n";
+        return;
+    }
+
     std::cout << "城市名称: ";
     std::cin >> name;
+    if (name.empty()) {
+        std::cout << "错误：名称不能为空！\n";
+        return;
+    }
+
     std::cout << "X坐标: ";
-    std::cin >> x;
+    if (!(std::cin >> x)) {
+        std::cin.clear();
+        std::cin.ignore(10000, '\n');
+        std::cout << "错误：X坐标必须是整数！\n";
+        return;
+    }
+
     std::cout << "Y坐标: ";
-    std::cin >> y;
+    if (!(std::cin >> y)) {
+        std::cin.clear();
+        std::cin.ignore(10000, '\n');
+        std::cout << "错误：Y坐标必须是整数！\n";
+        return;
+    }
+
     std::cin.ignore();
     std::cout << "简介: ";
     std::getline(std::cin, description);
 
     City city(id, name, x, y, description);
     graph.addCity(city);
+    FileIO::saveAllJSON(graph, cityFile, routeFile);
     std::cout << "城市添加成功！\n";
 }
 
@@ -100,9 +123,15 @@ void CLI::removeCityMenu() {
     int id;
     std::cout << "\n=== 删除城市 ===\n";
     std::cout << "城市编号: ";
-    std::cin >> id;
+    if (!(std::cin >> id) || id <= 0) {
+        std::cin.clear();
+        std::cin.ignore(10000, '\n');
+        std::cout << "错误：编号必须是正整数！\n";
+        return;
+    }
 
     if (graph.removeCity(id)) {
+        FileIO::saveAllJSON(graph, cityFile, routeFile);
         std::cout << "城市删除成功！\n";
     } else {
         std::cout << "城市不存在！\n";
@@ -115,7 +144,12 @@ void CLI::updateCityMenu() {
 
     std::cout << "\n=== 修改城市 ===\n";
     std::cout << "城市编号: ";
-    std::cin >> id;
+    if (!(std::cin >> id) || id <= 0) {
+        std::cin.clear();
+        std::cin.ignore(10000, '\n');
+        std::cout << "错误：编号必须是正整数！\n";
+        return;
+    }
 
     City* existing = graph.getCityById(id);
     if (!existing) {
@@ -125,16 +159,34 @@ void CLI::updateCityMenu() {
 
     std::cout << "新名称 (当前: " << existing->name << "): ";
     std::cin >> name;
+    if (name.empty()) {
+        std::cout << "错误：名称不能为空！\n";
+        return;
+    }
+
     std::cout << "新X坐标 (当前: " << existing->x << "): ";
-    std::cin >> x;
+    if (!(std::cin >> x)) {
+        std::cin.clear();
+        std::cin.ignore(10000, '\n');
+        std::cout << "错误：X坐标必须是整数！\n";
+        return;
+    }
+
     std::cout << "新Y坐标 (当前: " << existing->y << "): ";
-    std::cin >> y;
+    if (!(std::cin >> y)) {
+        std::cin.clear();
+        std::cin.ignore(10000, '\n');
+        std::cout << "错误：Y坐标必须是整数！\n";
+        return;
+    }
+
     std::cin.ignore();
     std::cout << "新简介 (当前: " << existing->description << "): ";
     std::getline(std::cin, description);
 
     City city(id, name, x, y, description);
     graph.updateCity(city);
+    FileIO::saveAllJSON(graph, cityFile, routeFile);
     std::cout << "城市修改成功！\n";
 }
 
@@ -142,11 +194,23 @@ void CLI::addRouteMenu() {
     int from, to;
     std::cout << "\n=== 添加线路 ===\n";
     std::cout << "起点城市编号: ";
-    std::cin >> from;
+    if (!(std::cin >> from) || from <= 0) {
+        std::cin.clear();
+        std::cin.ignore(10000, '\n');
+        std::cout << "错误：编号必须是正整数！\n";
+        return;
+    }
+
     std::cout << "终点城市编号: ";
-    std::cin >> to;
+    if (!(std::cin >> to) || to <= 0) {
+        std::cin.clear();
+        std::cin.ignore(10000, '\n');
+        std::cout << "错误：编号必须是正整数！\n";
+        return;
+    }
 
     if (graph.addEdge(from, to)) {
+        FileIO::saveAllJSON(graph, cityFile, routeFile);
         std::cout << "线路添加成功！\n";
     } else {
         std::cout << "添加失败，请检查城市编号！\n";
@@ -157,11 +221,23 @@ void CLI::removeRouteMenu() {
     int from, to;
     std::cout << "\n=== 删除线路 ===\n";
     std::cout << "起点城市编号: ";
-    std::cin >> from;
+    if (!(std::cin >> from) || from <= 0) {
+        std::cin.clear();
+        std::cin.ignore(10000, '\n');
+        std::cout << "错误：编号必须是正整数！\n";
+        return;
+    }
+
     std::cout << "终点城市编号: ";
-    std::cin >> to;
+    if (!(std::cin >> to) || to <= 0) {
+        std::cin.clear();
+        std::cin.ignore(10000, '\n');
+        std::cout << "错误：编号必须是正整数！\n";
+        return;
+    }
 
     if (graph.removeEdge(from, to)) {
+        FileIO::saveAllJSON(graph, cityFile, routeFile);
         std::cout << "线路删除成功！\n";
     } else {
         std::cout << "删除失败，请检查城市编号！\n";
@@ -573,8 +649,7 @@ void CLI::run() {
             case 9: shortestPathMenu(); break;
             case 10: tspMenu(); break;
             case 11: steinerTreeMenu(); break;
-            case 12: saveDataMenu(); break;
-            case 13: loadDataMenu(); break;
+            case 12: loadDataMenu(); break;
             case 0:
                 std::cout << "退出系统。\n";
                 return;

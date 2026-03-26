@@ -21,6 +21,10 @@ public:
     static bool saveCitiesJSON(const Graph& graph, const std::string& filename);
     static bool saveRoutesJSON(const Graph& graph, const std::string& filename);
     static bool saveAllJSON(const Graph& graph, const std::string& cityFile, const std::string& routeFile);
+
+    // JSON 字符串解析（CLI 输入）
+    static bool parseCityFromJSON(const std::string& jsonStr, City& outCity);
+    static bool parseEdgeFromJSON(const std::string& jsonStr, int& outFrom, int& outTo);
 };
 
 #endif
