@@ -12,6 +12,24 @@
 #include <vector>
 #include <algorithm>
 
+// 计算字符串显示宽度（中文算2，英文算1）
+static int getDisplayWidth(const std::string& str) {
+    int width = 0;
+    for (size_t i = 0; i < str.length(); ) {
+        unsigned char c = str[i];
+        if (c >= 0x80) {
+            // UTF-8 中文字符（3字节）
+            width += 2;
+            i += 3;
+        } else {
+            // ASCII 字符
+            width += 1;
+            i += 1;
+        }
+    }
+    return width;
+}
+
 // 获取城市名称的辅助函数
 static std::string getCityName(const Graph& graph, int cityId) {
     const City* city = graph.getCityById(cityId);
@@ -28,7 +46,9 @@ static void printTableHeader(const std::vector<std::string>& headers,
     printTableLine(0);
     for (size_t i = 0; i < headers.size(); ++i) {
         int w = widths[i];
-        std::cout << "| " << std::left << std::setw(w-2) << headers[i] << " ";
+        int displayW = getDisplayWidth(headers[i]);
+        int padding = w - 2 - displayW;
+        std::cout << "| " << headers[i] << std::string(padding > 0 ? padding : 0, ' ') << " ";
     }
     std::cout << "|" << std::endl;
     std::cout << "+";
@@ -42,7 +62,9 @@ static void printTableRow(const std::vector<std::string>& cells,
                           const std::vector<int>& widths) {
     for (size_t i = 0; i < cells.size(); ++i) {
         int w = widths[i];
-        std::cout << "| " << std::left << std::setw(w-2) << cells[i] << " ";
+        int displayW = getDisplayWidth(cells[i]);
+        int padding = w - 2 - displayW;
+        std::cout << "| " << cells[i] << std::string(padding > 0 ? padding : 0, ' ') << " ";
     }
     std::cout << "|" << std::endl;
 }
@@ -289,13 +311,11 @@ void CLI::displayAllMenu() {
         std::cout << "\n暂无线路数据。\n";
     } else {
         // 计算列宽
-        int fromWidth = 12;
-        int toWidth = 12;
-        int distWidth = 10;
-        int totalWidth = fromWidth + toWidth + distWidth + 9; // 3个|和空格
+        int routeWidth = 30;
+        int distWidth = 12;
 
-        std::vector<std::string> headers = {"起点城市", "终点城市", "距离(km)"};
-        std::vector<int> widths = {fromWidth, toWidth, distWidth};
+        std::vector<std::string> headers = {"线路", "距离(km)"};
+        std::vector<int> widths = {routeWidth, distWidth};
 
         printTableHeader(headers, widths);
 
@@ -304,8 +324,7 @@ void CLI::displayAllMenu() {
             std::string toName = getCityName(graph, edge.to);
 
             std::vector<std::string> row;
-            row.push_back(fromName);
-            row.push_back(toName);
+            row.push_back(fromName + " → " + toName);
             row.push_back(std::to_string(edge.length));
             printTableRow(row, widths);
         }
@@ -370,19 +389,17 @@ void CLI::makeConnectedMenu() {
     int totalLength = 0;
 
     // 表格显示
-    int fromWidth = 16;
-    int toWidth = 16;
+    int routeWidth = 30;
     int distWidth = 12;
 
-    std::vector<std::string> headers = {"起点城市", "终点城市", "距离(km)"};
-    std::vector<int> widths = {fromWidth, toWidth, distWidth};
+    std::vector<std::string> headers = {"线路", "距离(km)"};
+    std::vector<int> widths = {routeWidth, distWidth};
 
     printTableHeader(headers, widths);
 
     for (const auto& edge : newEdges) {
         std::vector<std::string> row;
-        row.push_back(getCityName(graph, edge.from));
-        row.push_back(getCityName(graph, edge.to));
+        row.push_back(getCityName(graph, edge.from) + " → " + getCityName(graph, edge.to));
         row.push_back(std::to_string(edge.length));
         printTableRow(row, widths);
         totalLength += edge.length;
@@ -543,6 +560,17 @@ void CLI::tspMenu() {
 
     printTableLine(0);
 
+    // 显示路径箭头形式
+    std::cout << "\n路径: ";
+    for (size_t i = 0; i < result.path.size(); ++i) {
+        City* city = graph.getCityById(result.path[i]);
+        std::cout << (city ? city->name : "未知");
+        if (i < result.path.size() - 1) {
+            std::cout << " → ";
+        }
+    }
+    std::cout << std::endl;
+
     // 计算总城市数
     int cityCount = result.path.size();
     std::cout << "\n访问城市数量: " << cityCount << " 个";
@@ -567,19 +595,17 @@ void CLI::steinerTreeMenu() {
         std::cout << "\n图中没有足够的城市构成生成树。\n";
     } else {
         // 表格显示线路
-        int fromWidth = 16;
-        int toWidth = 16;
+        int routeWidth = 30;
         int distWidth = 12;
 
-        std::vector<std::string> headers = {"起点城市", "终点城市", "距离(km)"};
-        std::vector<int> widths = {fromWidth, toWidth, distWidth};
+        std::vector<std::string> headers = {"线路", "距离(km)"};
+        std::vector<int> widths = {routeWidth, distWidth};
 
         printTableHeader(headers, widths);
 
         for (const auto& edge : result.edges) {
             std::vector<std::string> row;
-            row.push_back(getCityName(graph, edge.from));
-            row.push_back(getCityName(graph, edge.to));
+            row.push_back(getCityName(graph, edge.from) + " → " + getCityName(graph, edge.to));
             row.push_back(std::to_string(edge.length));
             printTableRow(row, widths);
         }
