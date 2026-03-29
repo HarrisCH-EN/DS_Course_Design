@@ -1559,356 +1559,55 @@ export function TSPView({ cities, routes }: { cities: City[], routes: Route[] })
 }
 
 export function SteinerTreeView({ cities, routes }: { cities: City[], routes: Route[] }) {
-  const [speed, setSpeed] = useState(50);
-  const [isAnimating, setIsAnimating] = useState(false);
-  const [isPaused, setIsPaused] = useState(false);
-  const [currentStep, setCurrentStep] = useState(0);
-  const [totalSteps, setTotalSteps] = useState(0);
-  const [logMessages, setLogMessages] = useState<string[]>([]);
   const [result, setResult] = useState<any>(null);
-  const [steinerPoints, setSteinerPoints] = useState<any[]>([]);
+  const [isLoading, setIsLoading] = useState(false);
 
-  const animationRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const stepsRef = useRef<any[]>([]);
-
-  // 计算两点间距离
-  const getDistance = (p1: {x: number, y: number}, p2: {x: number, y: number}) => {
-    return Math.sqrt(Math.pow(p1.x - p2.x, 2) + Math.pow(p1.y - p2.y, 2));
-  };
-
-  // 计算三角形的费马点
-  const getFermatPoint = (A: {x: number, y: number}, B: {x: number, y: number}, C: {x: number, y: number}) => {
-    // 计算三角形各边长度
-    const a = getDistance(B, C);
-    const b = getDistance(A, C);
-    const c = getDistance(A, B);
-    
-    // 使用余弦定理计算各角
-    const cosA = (b * b + c * c - a * a) / (2 * b * c);
-    const cosB = (a * a + c * c - b * b) / (2 * a * c);
-    const cosC = (a * a + b * b - c * c) / (2 * a * b);
-    
-    // 如果任一角>=120度，费马点就是该角顶点
-    if (cosA <= -0.5) return { ...A, type: 'vertex' as const, vertex: 'A' };
-    if (cosB <= -0.5) return { ...B, type: 'vertex' as const, vertex: 'B' };
-    if (cosC <= -0.5) return { ...C, type: 'vertex' as const, vertex: 'C' };
-    
-    // 否则计算真正的费马点（使用旋转法）
-    // 将BC绕B旋转60度得到C'
-    const angle = Math.PI / 3; // 60度
-    const Cx = B.x + (C.x - B.x) * Math.cos(angle) - (C.y - B.y) * Math.sin(angle);
-    const Cy = B.y + (C.x - B.x) * Math.sin(angle) + (C.y - B.y) * Math.cos(angle);
-    
-    // 费马点是AC'与AB的垂直平分线的交点
-    // 简化计算：费马点坐标
-    const denom = (A.x - Cx) * (B.y - Cy) - (A.y - Cy) * (B.x - Cx);
-    if (Math.abs(denom) < 0.0001) {
-      // 退化情况，返回重心
-      return {
-        x: (A.x + B.x + C.x) / 3,
-        y: (A.y + B.y + C.y) / 3,
-        type: 'steiner' as const
-      };
-    }
-    
-    const t = ((A.x - B.x) * (A.y - Cy) - (A.y - B.y) * (A.x - Cx)) / denom;
-    const x = A.x + t * (B.x - A.x);
-    const y = A.y + t * (B.y - A.y);
-    
-    return { x, y, type: 'steiner' as const };
-  };
-
-  // 生成施泰纳树步骤
-  const generateSteinerSteps = useCallback(() => {
-    const steps: any[] = [];
-    const allPoints: any[] = cities.map(c => ({ ...c, isOriginal: true }));
-    const edges: any[] = [];
-    const steinerPts: any[] = [];
-
-    // 步骤1: 构建初始MST
-    steps.push({
-      type: 'init',
-      points: [...allPoints],
-      edges: [],
-      message: `步骤1: 构建初始最小生成树 (MST)`
-    });
-
-    // Kruskal算法构建MST
-    const allEdges: any[] = [];
-    for (let i = 0; i < allPoints.length; i++) {
-      for (let j = i + 1; j < allPoints.length; j++) {
-        const dist = getDistance(allPoints[i], allPoints[j]);
-        allEdges.push({
-          source: i,
-          target: j,
-          weight: dist
-        });
-      }
-    }
-    allEdges.sort((a, b) => a.weight - b.weight);
-
-    // 并查集
-    const parent = Array.from({ length: allPoints.length }, (_, i) => i);
-    const find = (x: number): number => {
-      if (parent[x] !== x) parent[x] = find(parent[x]);
-      return parent[x];
-    };
-    const union = (x: number, y: number): boolean => {
-      const px = find(x), py = find(y);
-      if (px === py) return false;
-      parent[py] = px;
-      return true;
-    };
-
-    let mstEdges: any[] = [];
-    for (const edge of allEdges) {
-      if (union(edge.source, edge.target)) {
-        mstEdges.push({
-          source: allPoints[edge.source].id,
-          target: allPoints[edge.target].id,
-          weight: edge.weight,
-          sourceIdx: edge.source,
-          targetIdx: edge.target
-        });
-        
-        if (mstEdges.length === allPoints.length - 1) break;
-      }
-    }
-
-    let mstWeight = mstEdges.reduce((sum, e) => sum + e.weight, 0);
-    
-    steps.push({
-      type: 'mst_complete',
-      points: [...allPoints],
-      edges: [...mstEdges],
-      message: `初始MST完成: ${mstEdges.length}条边, 总长度: ${mstWeight.toFixed(2)} km`
-    });
-
-    // 步骤2: 尝试添加Steiner点优化
-    steps.push({
-      type: 'phase2',
-      points: [...allPoints],
-      edges: [...mstEdges],
-      message: `步骤2: 尝试添加辅助点(Steiner点)优化布线方案`
-    });
-
-    let improved = true;
-    let iteration = 0;
-    const maxIterations = Math.min(cities.length, 50);
-
-    while (improved && iteration < maxIterations) {
-      improved = false;
-      iteration++;
-
-      const degree: Map<number, number> = new Map();
-      mstEdges.forEach(e => {
-        degree.set(e.sourceIdx, (degree.get(e.sourceIdx) || 0) + 1);
-        degree.set(e.targetIdx, (degree.get(e.targetIdx) || 0) + 1);
-      });
-
-      const highDegreeVertices = Array.from(degree.entries())
-        .filter(([idx, d]) => d >= 3 && idx < cities.length)
-        .map(([idx, _]) => idx)
-        .slice(0, 10);
-
-      for (const vertexIdx of highDegreeVertices) {
-        if (improved) break;
-
-        const vertex = allPoints[vertexIdx];
-        const connectedEdges = mstEdges.filter(
-          e => e.sourceIdx === vertexIdx || e.targetIdx === vertexIdx
-        );
-
-        if (connectedEdges.length < 3) continue;
-
-        const originalNeighbors = connectedEdges
-          .map(e => e.sourceIdx === vertexIdx ? e.targetIdx : e.sourceIdx)
-          .filter(idx => idx < cities.length);
-
-        if (originalNeighbors.length < 3) continue;
-
-        const n1 = originalNeighbors[0];
-        const n2 = originalNeighbors[1];
-        const n3 = originalNeighbors[2];
-
-        const B = allPoints[n1];
-        const C = allPoints[n2];
-        const D = allPoints[n3];
-
-        const fermat = getFermatPoint(B, C, D);
-
-        steps.push({
-          type: 'check_steiner',
-          points: [...allPoints],
-          edges: [...mstEdges],
-          fermatPoint: fermat,
-          checking: [B.id, C.id, D.id],
-          message: `检查顶点 ${vertex.name} 的邻居三角形 ${B.name}-${C.name}-${D.name}`
-        });
-
-        if (fermat.type === 'steiner') {
-          const oldEdges = connectedEdges.filter(e =>
-            [n1, n2, n3].includes(e.sourceIdx === vertexIdx ? e.targetIdx : e.sourceIdx)
-          );
-          const oldWeight = oldEdges.reduce((sum, e) => sum + e.weight, 0);
-          const newWeight = getDistance(B, fermat) + getDistance(C, fermat) + getDistance(D, fermat);
-
-          // 对于完全图MST，不添加辅助点（与后端C++算法保持一致）
-          steps.push({
-            type: 'skip_steiner',
-            points: [...allPoints],
-            edges: [...mstEdges],
-            message: `✗ 跳过: 节省 ${(oldWeight - newWeight).toFixed(2)} km (${((1 - newWeight/oldWeight) * 100).toFixed(1)}%)，但完全图MST已是最优`
-          });
-        } else {
-          steps.push({
-            type: 'skip_steiner',
-            points: [...allPoints],
-            edges: [...mstEdges],
-            message: `✗ 跳过: 三角形最大角>=120°`
-          });
-        }
-      }
-    }
-
-    // 最终结果
-    const finalWeight = mstEdges.reduce((sum, e) => sum + e.weight, 0);
-    steps.push({
-      type: 'complete',
-      points: [...allPoints],
-      edges: [...mstEdges],
-      steinerPoints: [...steinerPts],
-      message: `✅ 施泰纳树完成! ${cities.length}个城市, ${steinerPts.length}个辅助点, 总长度: ${finalWeight.toFixed(2)} km`
-    });
-
-    return steps;
-  }, [cities]);
-
-  const handleAnalyze = () => {
+  const handleAnalyze = async () => {
     if (cities.length < 3) return alert('至少需要3个城市');
 
-    setIsAnimating(true);
-    setIsPaused(false);
-    setCurrentStep(0);
-    setLogMessages([]);
+    setIsLoading(true);
     setResult(null);
-    setSteinerPoints([]);
 
-    if (animationRef.current) {
-      clearTimeout(animationRef.current);
-      animationRef.current = null;
+    try {
+      const data = await api.analyzeSteiner();
+      setResult(data);
+    } catch (error) {
+      console.error('Failed to analyze steiner tree', error);
+      alert('分析失败');
+    } finally {
+      setIsLoading(false);
     }
-
-    const steps = generateSteinerSteps();
-    stepsRef.current = steps;
-    setTotalSteps(steps.length);
-    runAnimationStep(0);
   };
 
-  const runAnimationStep = (stepIndex: number) => {
-    if (stepIndex >= stepsRef.current.length) {
-      setIsAnimating(false);
-      setIsPaused(false);
-      const finalStep = stepsRef.current[stepsRef.current.length - 1];
-      setResult({
-        points: finalStep.points,
-        edges: finalStep.edges,
-        steinerPoints: finalStep.steinerPoints || [],
-        totalWeight: finalStep.edges.reduce((sum: number, e: any) => sum + e.weight, 0)
-      });
-      setSteinerPoints(finalStep.steinerPoints || []);
-      return;
-    }
-
-    const step = stepsRef.current[stepIndex];
-    setCurrentStep(stepIndex + 1);
-    setLogMessages(prev => [...prev.slice(-49), step.message]);
-    
-    if (step.steinerPoints) {
-      setSteinerPoints(step.steinerPoints);
-    }
-
-    animationRef.current = setTimeout(() => {
-      runAnimationStep(stepIndex + 1);
-    }, speed);
-  };
-
-  const stopAnimation = () => {
-    if (animationRef.current) {
-      clearTimeout(animationRef.current);
-      animationRef.current = null;
-    }
-    setIsPaused(true);
-  };
-
-  const continueAnimation = () => {
-    setIsPaused(false);
-    runAnimationStep(currentStep);
-  };
-
-  const resetAnimation = () => {
-    if (animationRef.current) {
-      clearTimeout(animationRef.current);
-      animationRef.current = null;
-    }
-    setIsAnimating(false);
-    setIsPaused(false);
-    setCurrentStep(0);
-    setLogMessages([]);
+  const handleReset = () => {
     setResult(null);
-    setSteinerPoints([]);
   };
 
   // 计算高亮路线
-  const getHighlightedRoutes = useCallback(() => {
-    if (stepsRef.current.length === 0) return [];
-    const currentStepData = stepsRef.current[Math.min(currentStep - 1, stepsRef.current.length - 1)];
-    if (!currentStepData) return [];
+  const highlightedRoutes = result?.edges?.map((edge: any) => ({
+    source: edge.source,
+    target: edge.target,
+    color: '#22c55e'
+  })) || [];
 
-    const highlighted: any[] = [];
-    if (currentStepData.edges) {
-      currentStepData.edges.forEach((edge: any) => {
-        highlighted.push({
-          source: edge.source,
-          target: edge.target,
-          color: '#22c55e'
-        });
-      });
-    }
-
-    // 高亮当前正在检查的三角形
-    if (currentStepData.checking) {
-      const [a, b, c] = currentStepData.checking;
-      highlighted.push({ source: a, target: b, color: 'var(--color-primary)' });
-      highlighted.push({ source: b, target: c, color: 'var(--color-primary)' });
-      highlighted.push({ source: c, target: a, color: 'var(--color-primary)' });
-    }
-
-    return highlighted;
-  }, [currentStep]);
-
-  // 计算高亮城市
-  const getHighlightedCities = useCallback(() => {
-    const highlighted: any[] = [];
-    
-    // 原始城市
-    cities.forEach(city => {
-      highlighted.push({ id: city.id, color: 'var(--color-primary)' });
+  // 计算高亮城市（所有原始城市 + Steiner点）
+  const highlightedCities: any[] = [];
+  cities.forEach(city => {
+    highlightedCities.push({ id: city.id, color: 'var(--color-primary)' });
+  });
+  if (result?.steinerPoints) {
+    result.steinerPoints.forEach((sp: any) => {
+      highlightedCities.push({ id: sp.id, color: '#f97316' });
     });
-    
-    // Steiner点
-    steinerPoints.forEach(sp => {
-      highlighted.push({ id: sp.id, color: '#f97316', className: 'steiner-point' });
+  }
+
+  // 构建显示的城市列表（包含 Steiner 点）
+  const displayCities: any[] = [...cities];
+  if (result?.steinerPoints) {
+    result.steinerPoints.forEach((sp: any) => {
+      displayCities.push({ id: sp.id, x: sp.x, y: sp.y, name: `辅助点${Math.abs(sp.id)}` });
     });
-    
-    return highlighted;
-  }, [cities, steinerPoints]);
-
-  const highlightedRoutes = getHighlightedRoutes();
-  const highlightedCities = getHighlightedCities();
-
-  // 合并显示的城市列表
-  const displayCities = [...cities, ...steinerPoints];
+  }
 
   return (
     <div className="flex-1 flex flex-col min-w-0 overflow-hidden bg-slate-50 h-full">
@@ -1938,78 +1637,25 @@ export function SteinerTreeView({ cities, routes }: { cities: City[], routes: Ro
 
           <div className="flex-1 flex flex-col overflow-hidden">
             <div className="p-6 space-y-4 border-b border-slate-100">
-              <div>
-                <label className="block text-sm font-semibold text-slate-700 mb-2">动画速度 (ms): {speed}</label>
-                <input 
-                  type="range" 
-                  min="1" 
-                  max="100" 
-                  step="1"
-                  value={speed}
-                  onChange={(e) => setSpeed(parseInt(e.target.value))}
-                  className="w-full h-2 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-blue-600"
-                />
-                <div className="flex justify-between text-xs text-slate-400 mt-1">
-                  <span>1ms (最快)</span>
-                  <span>100ms (最慢)</span>
-                </div>
-              </div>
-
-              <button 
+              <button
                 onClick={handleAnalyze}
-                disabled={isAnimating}
+                disabled={isLoading}
                 className="w-full py-3 bg-[#1c85e8] hover:bg-blue-700 text-white rounded-lg font-bold shadow-lg shadow-blue-200 transition-all flex items-center justify-center gap-2 disabled:opacity-75 disabled:cursor-not-allowed"
               >
                 <GitMerge className="w-5 h-5" />
-                {isAnimating ? '计算中...' : '开始求解'}
+                {isLoading ? '计算中...' : '开始求解'}
               </button>
 
-              <div className="flex gap-2">
-                {isAnimating && !isPaused && (
-                  <button onClick={stopAnimation}
-                    className="flex-1 py-2 bg-orange-500 hover:bg-orange-600 text-white rounded font-medium flex items-center justify-center gap-2 text-sm">
-                    <Square className="w-4 h-4" /> 暂停
-                  </button>
-                )}
-                {isAnimating && isPaused && (
-                  <button onClick={continueAnimation}
-                    className="flex-1 py-2 bg-[#ff886f] hover:bg-[#ff886f] text-white rounded font-medium flex items-center justify-center gap-2 text-sm">
-                    <Play className="w-4 h-4" /> 继续
-                  </button>
-                )}
-                {(isAnimating || result) && (
-                  <button onClick={resetAnimation}
-                    className="px-3 py-2 border border-slate-300 text-slate-600 rounded text-sm hover:bg-slate-50">
-                    重置
-                  </button>
-                )}
-              </div>
-
-              {(isAnimating || result) && (
-                <div>
-                  <div className="flex justify-between text-xs mb-1">
-                    <span className="text-slate-600">进度</span>
-                    <span className="font-mono text-[#1c85e8]">{currentStep} / {totalSteps}</span>
-                  </div>
-                  <div className="w-full bg-slate-200 rounded-full h-2">
-                    <div className="bg-[#1c85e8] h-2 rounded-full transition-all" style={{ width: `${totalSteps > 0 ? (currentStep / totalSteps) * 100 : 0}%` }}></div>
-                  </div>
-                </div>
+              {(result || isLoading) && (
+                <button
+                  onClick={handleReset}
+                  disabled={isLoading}
+                  className="w-full py-2 border border-slate-300 text-slate-600 rounded-lg font-medium hover:bg-slate-50 flex items-center justify-center gap-2 disabled:opacity-75 disabled:cursor-not-allowed"
+                >
+                  清除结果
+                </button>
               )}
             </div>
-
-            {logMessages.length > 0 && (
-              <div className="flex-1 p-4 overflow-hidden flex flex-col">
-                <h4 className="text-xs font-semibold text-slate-700 mb-2">算法推演</h4>
-                <div className="flex-1 bg-slate-50 rounded border border-slate-200 p-2 text-[10px] font-mono space-y-1 overflow-y-auto">
-                  {logMessages.map((msg, idx) => (
-                    <div key={idx} className={`${idx === logMessages.length - 1 ? 'text-[#1c85e8] font-semibold' : 'text-slate-600'}`}>
-                      {msg}
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
 
             {result && (
               <div className="p-4 border-t border-slate-100">

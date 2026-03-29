@@ -1,3 +1,19 @@
+// 1. 检查连通性:isConnected()判断图是否连通
+
+// 2. 找连通分量:findConnectedComponents()返回每个连通分量的节点列表
+
+// 3. 连通图补全:makeConnected()
+// 解释:
+// 这个算法解决的问题是：如果图不连通，怎么用最少的线路总长度把它连起来？
+// 步骤：
+// 1. 先找出所有连通分量（比如 3 个孤立的城市群）
+// 2. 计算每两个连通分量之间的最短连接边（暴力枚举所有城市对）
+// 3. 把这些边按长度排序
+// 4. 用 Kruskal 算法（基于并查集）贪心选择最短边，直到所有连通分量连成一个整体
+// 并查集的作用是快速判断两个连通分量是否已经连通，避免形成环。
+ 
+
+
 #include "Connectivity.h"
 #include <algorithm>
 #include <limits>
@@ -33,23 +49,25 @@ void Connectivity::dfs(int node, const std::vector<std::vector<std::pair<int, in
 
 bool Connectivity::isConnected(const Graph& graph) {
     int n = graph.getCityCount();
-    if (n == 0) return true;
+    if (n == 0) return true;  // 空图认为是连通的
 
-    // ✅ 优化: 复用邻接表构建
+    // 优化: 复用邻接表构建
     std::vector<std::vector<std::pair<int, int>>> adjList = buildAdjList(graph);
 
     std::vector<bool> visited(n, false);
-    dfs(0, adjList, visited);
 
+    dfs(0, adjList, visited);  // 从节点 0 开始 DFS
+
+    // 检查是否所有节点都被访问到
     for (bool v : visited) {
-        if (!v) return false;
+        if (!v) return false;  // 有节点未访问，说明不连通
     }
     return true;
 }
 
 std::vector<std::vector<int>> Connectivity::findConnectedComponents(const Graph& graph) {
     int n = graph.getCityCount();
-    // ✅ 优化: 复用邻接表构建
+    // 优化: 复用邻接表构建
     std::vector<std::vector<std::pair<int, int>>> adjList = buildAdjList(graph);
 
     std::vector<bool> visited(n, false);

@@ -1,3 +1,13 @@
+// Dijkstra 是经典的单源最短路径算法，适用于边权非负的图。
+// 核心思想：
+// 1. 维护一个距离数组 `dist[]`，记录起点到每个节点的当前最短距离
+// 2. 用优先队列每次取出距离最小的未访问节点
+// 3. 对该节点的所有邻居进行"松弛"操作：如果通过当前节点到邻居的距离更短，就更新邻居的距离
+// 4. 重复直到所有节点都被访问
+//时间复杂度：O((V+E)logV)，V 是节点数，E 是边数。优先队列保证了每次都处理距离最小的节点，这是算法正确性的关键。
+// 路径回溯：通过 `parent[]` 数组记录每个节点是从哪个节点更新来的，最后从终点沿着父节点链回溯到起点，就得到了完整路径。
+
+
 #include "ShortestPath.h"
 #include <queue>
 #include <algorithm>
@@ -30,7 +40,7 @@ std::vector<PathResult> ShortestPath::dijkstraFromCity(const Graph& graph, int s
         if (visited[u]) continue;
         visited[u] = true;
 
-        // ✅ 修复: 只遍历邻接节点，而非所有节点
+        //修复: 只遍历邻接节点，而非所有节点
         const auto& neighbors = graph.getNeighborsByIndex(u);
         for (const auto& neighbor : neighbors) {
             int v = neighbor.first;

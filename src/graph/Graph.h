@@ -9,10 +9,10 @@
 
 class Graph {
 private:
-    std::vector<City> cities;
-    std::map<int, int> cityIdToIndex;
-    std::vector<std::vector<std::pair<int, int>>> adjList;
-    std::vector<std::vector<int>> adjMatrix;
+    std::vector<City> cities;                              // 存储所有城市
+    std::map<int, int> cityIdToIndex;                      // 城市ID到数组索引的映射
+    std::vector<std::vector<std::pair<int, int>>> adjList; // 邻接表：每个城市的邻居列表
+    std::vector<std::vector<int>> adjMatrix;               // 邻接矩阵：存储城市间距离
 
 public:
     Graph();

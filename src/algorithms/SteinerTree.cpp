@@ -9,63 +9,14 @@
 #include <queue>
 #include <climits>
 
-SteinerTree::FermatResult SteinerTree::computeFermatPoint(
-    double ax, double ay, double bx, double by, double cx, double cy) {
-
-    // Edge lengths
-    double a = std::sqrt((cx - bx) * (cx - bx) + (cy - by) * (cy - by));
-    double b = std::sqrt((cx - ax) * (cx - ax) + (cy - ay) * (cy - ay));
-    double c = std::sqrt((bx - ax) * (bx - ax) + (by - ay) * (by - ay));
-
-    // Handle degenerate triangles
-    if (a < 1e-10 || b < 1e-10 || c < 1e-10) {
-        return {(ax + bx + cx) / 3.0, (ay + by + cy) / 3.0, false};
-    }
-
-    // Cosine of each angle using law of cosines
-    double cosA = (b * b + c * c - a * a) / (2.0 * b * c);
-    double cosB = (a * a + c * c - b * b) / (2.0 * a * c);
-    double cosC = (a * a + b * b - c * c) / (2.0 * a * b);
-
-    // Clamp values to avoid NaN due to floating point errors
-    cosA = std::max(-1.0, std::min(1.0, cosA));
-    cosB = std::max(-1.0, std::min(1.0, cosB));
-    cosC = std::max(-1.0, std::min(1.0, cosC));
-
-    // If any angle >= 120 degrees (cos <= -0.5), Fermat point is that vertex
-    if (cosA <= -0.5) return {ax, ay, true};
-    if (cosB <= -0.5) return {bx, by, true};
-    if (cosC <= -0.5) return {cx, cy, true};
-
-    // Compute Fermat point using rotation method
-    const double PI = 3.14159265358979323846;
-    double angle = PI / 3.0; // 60 degrees
-
-    // Rotate point C around B by 60 degrees to get C'
-    double cpx = bx + (cx - bx) * std::cos(angle) - (cy - by) * std::sin(angle);
-    double cpy = by + (cx - bx) * std::sin(angle) + (cy - by) * std::cos(angle);
-
-    double dxAC = cpx - ax;
-    double dyAC = cpy - ay;
-    double dxBC = cx - bx;
-    double dyBC = cy - by;
-
-    double denom = dxAC * dyBC - dyAC * dxBC;
-    if (std::abs(denom) < 1e-10) {
-        return {(ax + bx + cx) / 3.0, (ay + by + cy) / 3.0, false};
-    }
-
-    double t = ((bx - ax) * dyBC - (by - ay) * dxBC) / denom;
-    double fx = ax + t * dxAC;
-    double fy = ay + t * dyAC;
-
-    return {fx, fy, false};
+// 检查两边是否是同一条无向边
+static bool isSameEdge(const Edge& e1, int u, int v) {
+    return (e1.from == u && e1.to == v) || (e1.from == v && e1.to == u);
 }
 
 // 检查图的连通性
 static bool isConnected(const std::vector<Edge>& edges, const std::set<int>& cityIdSet) {
-    if (cityIdSet.empty()) return true;
-    if (cityIdSet.size() == 1) return true;
+    if (cityIdSet.empty() || cityIdSet.size() == 1) return true;
 
     std::map<int, std::vector<int>> adj;
     for (const auto& e : edges) {
@@ -94,16 +45,6 @@ static bool isConnected(const std::vector<Edge>& edges, const std::set<int>& cit
     return visited.size() == cityIdSet.size();
 }
 
-// 构建邻接表
-static std::map<int, std::vector<int>> buildAdjacency(const std::vector<Edge>& edges) {
-    std::map<int, std::vector<int>> adj;
-    for (const auto& e : edges) {
-        adj[e.from].push_back(e.to);
-        adj[e.to].push_back(e.from);
-    }
-    return adj;
-}
-
 // 计算总权重
 static int computeTotalWeight(const std::vector<Edge>& edges) {
     int total = 0;
@@ -112,6 +53,68 @@ static int computeTotalWeight(const std::vector<Edge>& edges) {
     }
     return total;
 }
+
+// 计算费马点 (使用夹角判定 + Weiszfeld 迭代算法，稳定无bug)
+SteinerTree::FermatResult SteinerTree::computeFermatPoint(
+    double ax, double ay, double bx, double by, double cx, double cy) {
+
+    // 边长计算
+    double a = std::hypot(cx - bx, cy - by);
+    double b = std::hypot(cx - ax, cy - ay);
+    double c = std::hypot(bx - ax, by - ay);
+
+    // 处理退化三角形（三点重合或极近）
+    if (a < 1e-7 || b < 1e-7 || c < 1e-7) {
+        return {(ax + bx + cx) / 3.0, (ay + by + cy) / 3.0, true};
+    }
+
+    // 余弦定理求角
+    double cosA = (b * b + c * c - a * a) / (2.0 * b * c);
+    double cosB = (a * a + c * c - b * b) / (2.0 * a * c);
+    double cosC = (a * a + b * b - c * c) / (2.0 * a * b);
+
+    // 限制在[-1, 1]防止浮点误差导致 NaN
+    cosA = std::max(-1.0, std::min(1.0, cosA));
+    cosB = std::max(-1.0, std::min(1.0, cosB));
+    cosC = std::max(-1.0, std::min(1.0, cosC));
+
+    // 如果任何一个角 >= 120 度 (cos <= -0.5)，费马点就是该顶点
+    if (cosA <= -0.5) return {ax, ay, true};
+    if (cosB <= -0.5) return {bx, by, true};
+    if (cosC <= -0.5) return {cx, cy, true};
+
+    // Weiszfeld 算法迭代求解费马点（梯度下降），对任意三点非常稳定
+    double fx = (ax + bx + cx) / 3.0;
+    double fy = (ay + by + cy) / 3.0;
+
+    for (int iter = 0; iter < 100; ++iter) {
+        double d1 = std::hypot(fx - ax, fy - ay);
+        double d2 = std::hypot(fx - bx, fy - by);
+        double d3 = std::hypot(fx - cx, fy - cy);
+
+        if (d1 < 1e-9 || d2 < 1e-9 || d3 < 1e-9) break;
+
+        double weight1 = 1.0 / d1;
+        double weight2 = 1.0 / d2;
+        double weight3 = 1.0 / d3;
+        double totalWeight = weight1 + weight2 + weight3;
+
+        double next_x = (ax * weight1 + bx * weight2 + cx * weight3) / totalWeight;
+        double next_y = (ay * weight1 + by * weight2 + cy * weight3) / totalWeight;
+
+        // 如果移动距离极小，视为收敛
+        if (std::hypot(next_x - fx, next_y - fy) < 1e-7) {
+            fx = next_x;
+            fy = next_y;
+            break;
+        }
+        fx = next_x;
+        fy = next_y;
+    }
+
+    return {fx, fy, false};
+}
+
 
 SteinerTreeResult SteinerTree::solve(const Graph& graph) {
     SteinerTreeResult result;
@@ -123,11 +126,15 @@ SteinerTreeResult SteinerTree::solve(const Graph& graph) {
 
     std::vector<City> cities = graph.getAllCities();
     std::set<int> cityIdSet;
+    // 使用 posMap 缓存所有点的坐标（包括城市和新生成的斯坦纳点）
+    std::map<int, std::pair<double, double>> posMap;
+    
     for (const auto& city : cities) {
         cityIdSet.insert(city.id);
+        posMap[city.id] = {city.x, city.y};
     }
 
-    // Step 1: Compute MST on complete graph
+    // 第一步：在完全图上生成最小生成树(MST)
     std::vector<Edge> bestEdges = MST::kruskal(graph);
     std::vector<SteinerPoint> steinerPoints;
 
@@ -138,137 +145,110 @@ SteinerTreeResult SteinerTree::solve(const Graph& graph) {
         return result;
     }
 
-    // Step 2: Try to optimize using Fermat points
-    std::map<int, std::pair<double, double>> steinerPointMap;
+    // 第二步：使用局部启发式（3端点插入法）进行斯坦纳点优化
     bool improved = true;
     int maxIterations = n * 10;
     int iteration = 0;
+    int nextSteinerId = -1; // 斯坦纳点从 -1 开始递减
 
     while (improved && iteration < maxIterations) {
         improved = false;
         iteration++;
 
-        std::map<int, std::vector<int>> adj = buildAdjacency(bestEdges);
+        // 构建当前边集的邻接表
+        std::map<int, std::vector<int>> adj;
+        for (const auto& e : bestEdges) {
+            adj[e.from].push_back(e.to);
+            adj[e.to].push_back(e.from);
+        }
 
-        // 对每个度>=3的原始城市顶点
-        for (const auto& city : cities) {
-            int cityId = city.id;
-            auto it = adj.find(cityId);
-            if (it == adj.end() || it->second.size() < 3) continue;
+        // 遍历每个度数 >= 3 的节点（作为中心节点 u）
+        // 只有度数>=3的顶点才可能通过添加Steiner点优化（三棱锥结构）
+        for (const auto& kv : adj) {
+            int u = kv.first;
+            const std::vector<int>& neighbors = kv.second;
 
-            const std::vector<int>& neighbors = it->second;
+            if (neighbors.size() < 3) continue;
 
-            // 只考虑原始城市（正ID）作为邻居
-            std::vector<int> originalNeighbors;
-            for (int nid : neighbors) {
-                if (cityIdSet.count(nid)) {
-                    originalNeighbors.push_back(nid);
-                }
-            }
+            // 尝试 u 的任意两个邻居组合 (v1, v2)
+            bool nodeImproved = false;
+            for (size_t i = 0; i < neighbors.size() && !nodeImproved; i++) {
+                for (size_t j = i + 1; j < neighbors.size() && !nodeImproved; j++) {
+                    int v1 = neighbors[i];
+                    int v2 = neighbors[j];
 
-            if (originalNeighbors.size() < 3) continue;
+                    // 获取三点坐标
+                    if (!posMap.count(u) || !posMap.count(v1) || !posMap.count(v2)) continue;
+                    double ux = posMap[u].first, uy = posMap[u].second;
+                    double v1x = posMap[v1].first, v1y = posMap[v1].second;
+                    double v2x = posMap[v2].first, v2y = posMap[v2].second;
 
-            // 尝试所有3个邻居的组合
-            bool cityImproved = false;
-            for (size_t i = 0; i < originalNeighbors.size() && !cityImproved; i++) {
-                for (size_t j = i + 1; j < originalNeighbors.size() && !cityImproved; j++) {
-                    for (size_t k = j + 1; k < originalNeighbors.size() && !cityImproved; k++) {
-                        int n1 = originalNeighbors[i];
-                        int n2 = originalNeighbors[j];
-                        int n3 = originalNeighbors[k];
+                    // 计算 u, v1, v2 的费马点
+                    FermatResult fermat = computeFermatPoint(ux, uy, v1x, v1y, v2x, v2y);
+                    
+                    // 如果费马点落在已有顶点上，说明没有优化空间
+                    if (fermat.isVertex) continue;
 
-                        const City* c1 = graph.getCityById(n1);
-                        const City* c2 = graph.getCityById(n2);
-                        const City* c3 = graph.getCityById(n3);
-                        if (!c1 || !c2 || !c3) continue;
+                    // 使用精确的双精度浮点计算长度，避免整型抹除微小优化
+                    double oldDist = std::hypot(ux - v1x, uy - v1y) + std::hypot(ux - v2x, uy - v2y);
+                    double newDist = std::hypot(fermat.x - ux, fermat.y - uy) + 
+                                     std::hypot(fermat.x - v1x, fermat.y - v1y) + 
+                                     std::hypot(fermat.x - v2x, fermat.y - v2y);
 
-                        // 计算费马点
-                        FermatResult fermat = computeFermatPoint(
-                            c1->x, c1->y, c2->x, c2->y, c3->x, c3->y);
-
-                        if (fermat.isVertex) continue;
-
-                        // 新权重
-                        double d1 = std::sqrt((fermat.x - c1->x) * (fermat.x - c1->x) +
-                                              (fermat.y - c1->y) * (fermat.y - c1->y));
-                        double d2 = std::sqrt((fermat.x - c2->x) * (fermat.x - c2->x) +
-                                              (fermat.y - c2->y) * (fermat.y - c2->y));
-                        double d3 = std::sqrt((fermat.x - c3->x) * (fermat.x - c3->x) +
-                                              (fermat.y - c3->y) * (fermat.y - c3->y));
-                        int newWeight = (int)std::round(d1 + d2 + d3);
-
-                        // 旧权重
-                        int oldWeight = 0;
-                        std::vector<Edge> edgesToRemove;
-                        for (const auto& e : bestEdges) {
-                            if ((e.from == cityId && e.to == n1) || (e.to == cityId && e.from == n1)) {
-                                oldWeight += e.length;
-                                edgesToRemove.push_back(e);
-                            } else if ((e.from == cityId && e.to == n2) || (e.to == cityId && e.from == n2)) {
-                                oldWeight += e.length;
-                                edgesToRemove.push_back(e);
-                            } else if ((e.from == cityId && e.to == n3) || (e.to == cityId && e.from == n3)) {
-                                oldWeight += e.length;
-                                edgesToRemove.push_back(e);
-                            }
-                        }
-
-                        if (edgesToRemove.size() != 3) continue;
-
-                        if (newWeight >= oldWeight) continue;
-
-                        // 构建新边集
+                    // 如果新连接方式更短（留出 1e-4 的裕度防止浮点波动）
+                    if (newDist < oldDist - 1e-4) {
+                        
+                        // 生成新图边集
                         std::vector<Edge> newEdges;
-                        std::set<Edge> removedSet(edgesToRemove.begin(), edgesToRemove.end());
                         for (const auto& e : bestEdges) {
-                            if (removedSet.count(e) == 0) {
+                            // 剔除旧的两条边 (u, v1) 和 (u, v2)
+                            if (!isSameEdge(e, u, v1) && !isSameEdge(e, u, v2)) {
                                 newEdges.push_back(e);
                             }
                         }
 
-                        // 分配Steiner点ID（负值）
-                        int nextSteinerId = -1;
-                        for (const auto& e : newEdges) {
-                            if (e.from < nextSteinerId) nextSteinerId = e.from;
-                            if (e.to < nextSteinerId) nextSteinerId = e.to;
-                        }
-                        int fermatId = nextSteinerId - 1;
-                        if (fermatId >= 0) fermatId = -1;
+                        // 注册新的斯坦纳点
+                        int sId = nextSteinerId--;
+                        posMap[sId] = {fermat.x, fermat.y};
 
-                        newEdges.push_back(Edge(n1, fermatId, (int)std::round(d1)));
-                        newEdges.push_back(Edge(n2, fermatId, (int)std::round(d2)));
-                        newEdges.push_back(Edge(n3, fermatId, (int)std::round(d3)));
+                        // 增加新的三条边连向费马点
+                        newEdges.push_back(Edge(sId, u, (int)std::round(std::hypot(fermat.x - ux, fermat.y - uy))));
+                        newEdges.push_back(Edge(sId, v1, (int)std::round(std::hypot(fermat.x - v1x, fermat.y - v1y))));
+                        newEdges.push_back(Edge(sId, v2, (int)std::round(std::hypot(fermat.x - v2x, fermat.y - v2y))));
 
-                        // 验证连通性
-                        if (!isConnected(newEdges, cityIdSet)) {
-                            continue;
-                        }
-
+                        // 标准替换操作数学上能绝对保证连通性，直接应用更新
                         bestEdges = newEdges;
-                        steinerPointMap[fermatId] = std::make_pair(fermat.x, fermat.y);
                         improved = true;
-                        cityImproved = true;
+                        nodeImproved = true;
                         break;
                     }
                 }
             }
-
-            if (improved) break;
+            if (improved) break; // 若图被修改，打断当前邻接表遍历，重构最新拓扑
         }
     }
 
-    // 最终验证
+    // 最终全局连通性保险验证（如果由于极端异常断开，则回退到原生MST）
     if (!isConnected(bestEdges, cityIdSet)) {
         bestEdges = MST::kruskal(graph);
-        steinerPointMap.clear();
+        // 清除所有生成的斯坦纳点标记
+        std::map<int, std::pair<double, double>> cleanMap;
+        for (const auto& kv : posMap) if (kv.first >= 0) cleanMap[kv.first] = kv.second;
+        posMap = cleanMap;
     }
 
-    // 从最终边集提取Steiner点
-    for (const auto& kv : steinerPointMap) {
+    // 从边集中提取实际保留在图里的 Steiner 点 (ID < 0)
+    std::set<int> activeSteinerIds;
+    for (const auto& e : bestEdges) {
+        if (e.from < 0) activeSteinerIds.insert(e.from);
+        if (e.to < 0) activeSteinerIds.insert(e.to);
+    }
+    
+    for (int sId : activeSteinerIds) {
         SteinerPoint sp;
-        sp.id = kv.first;
-        sp.x = kv.second.first;
-        sp.y = kv.second.second;
+        sp.id = sId;
+        sp.x = posMap[sId].first;
+        sp.y = posMap[sId].second;
         steinerPoints.push_back(sp);
     }
 
@@ -279,5 +259,5 @@ SteinerTreeResult SteinerTree::solve(const Graph& graph) {
 }
 
 int SteinerTree::getTotalLength(const std::vector<Edge>& edges) {
-    return MST::getTotalWeight(edges);
+    return computeTotalWeight(edges);
 }

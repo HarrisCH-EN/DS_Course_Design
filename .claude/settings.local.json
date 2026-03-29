@@ -41,7 +41,18 @@
       "Bash(\"D:\\\\Professional_Softwares\\\\C_CPP\\\\mingw64\\\\bin\\\\g++.exe\" -std=c++11 -O2 src/main.cpp src/graph/Graph.cpp src/algorithms/*.cpp src/io/FileIO.cpp src/ui/CLI.cpp -o network_json.exe)",
       "Bash(\"D:\\\\Professional_Softwares\\\\C_CPP\\\\mingw64\\\\bin\\\\g++.exe\" -std=c++11 -O2 src/main.cpp src/graph/Graph.cpp src/algorithms/*.cpp src/io/FileIO.cpp src/ui/CLI.cpp src/ApiServer.cpp src/SimpleHttpServer.cpp -o network_json.exe -lws2_32)",
       "Bash(\"D:\\\\Professional_Softwares\\\\C_CPP\\\\mingw64\\\\bin\\\\g++.exe\" -std=c++11 -O2 src/main.cpp src/graph/Graph.cpp src/algorithms/*.cpp src/io/FileIO.cpp src/ui/CLI.cpp src/ApiServer.cpp src/SimpleHttpServer.cpp -o network.exe -lws2_32)",
-      "Bash(./network.exe)"
+      "Bash(./network.exe)",
+      "Bash(g++ -std=c++11 -O2 src/main.cpp src/ApiServer.cpp src/SimpleHttpServer.cpp src/graph/Graph.cpp src/algorithms/*.cpp src/io/FileIO.cpp src/ui/CLI.cpp -o network.exe)",
+      "Bash(curl -s http://localhost:3001/health)",
+      "Bash(curl -s -X POST http://localhost:3001/api/analyze/steiner)",
+      "Bash(ls:*)",
+      "Bash(g++ -std=c++11 -O2 src/main.cpp src/SimpleHttpServer.cpp src/ApiServer.cpp src/graph/Graph.cpp src/algorithms/*.cpp src/io/FileIO.cpp src/ui/CLI.cpp -o network.exe 2>&1)",
+      "Bash(taskkill //F //IM network.exe)",
+      "Bash(pkill -f network.exe)",
+      "Bash(curl -s http://localhost:3001/api/data)",
+      "Bash(curl -v http://localhost:3001/api/data)",
+      "Bash(pkill -9 -f network)",
+      "Bash(g++ -std=c++11 -O2 src/main.cpp src/graph/Graph.cpp src/algorithms/*.cpp src/io/FileIO.cpp src/ui/CLI.cpp src/SimpleHttpServer.cpp src/ApiServer.cpp -lws2_32 -o network.exe 2>&1)"
     ]
   }
 }

@@ -414,16 +414,26 @@ void ApiServer::setupRoutes() {
         SteinerTreeResult result = SteinerTree::solve(graph);
         std::vector<Edge> edges = result.edges;
         int totalDistance = result.totalDistance;
-        
+        std::vector<SteinerPoint> steinerPoints = result.steinerPoints;
+
+        // 构建 JSON: {"edges":[...],"steinerPoints":[...],"totalWeight":...}
         std::string json = "{\"edges\":[";
         for (size_t i = 0; i < edges.size(); i++) {
-            json += "{\"source\":\"" + std::to_string(edges[i].from) + 
-                   "\",\"target\":\"" + std::to_string(edges[i].to) + 
+            json += "{\"source\":\"" + std::to_string(edges[i].from) +
+                   "\",\"target\":\"" + std::to_string(edges[i].to) +
                    "\",\"distance\":" + std::to_string(edges[i].length) + "}";
             if (i < edges.size() - 1) json += ",";
         }
-        json += "],\"distance\":" + std::to_string(totalDistance) + "}";
-        
+        json += "],\"steinerPoints\":[";
+
+        for (size_t i = 0; i < steinerPoints.size(); i++) {
+            json += "{\"id\":" + std::to_string(steinerPoints[i].id) +
+                   ",\"x\":" + std::to_string(steinerPoints[i].x) +
+                   ",\"y\":" + std::to_string(steinerPoints[i].y) + "}";
+            if (i < steinerPoints.size() - 1) json += ",";
+        }
+        json += "],\"totalWeight\":" + std::to_string(totalDistance) + "}";
+
         return json;
     });
 }
