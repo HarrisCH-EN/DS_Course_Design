@@ -52,7 +52,8 @@
       "Bash(curl -s http://localhost:3001/api/data)",
       "Bash(curl -v http://localhost:3001/api/data)",
       "Bash(pkill -9 -f network)",
-      "Bash(g++ -std=c++11 -O2 src/main.cpp src/graph/Graph.cpp src/algorithms/*.cpp src/io/FileIO.cpp src/ui/CLI.cpp src/SimpleHttpServer.cpp src/ApiServer.cpp -lws2_32 -o network.exe 2>&1)"
+      "Bash(g++ -std=c++11 -O2 src/main.cpp src/graph/Graph.cpp src/algorithms/*.cpp src/io/FileIO.cpp src/ui/CLI.cpp src/SimpleHttpServer.cpp src/ApiServer.cpp -lws2_32 -o network.exe 2>&1)",
+      "Bash(npx eslint:*)"
     ]
   }
 }

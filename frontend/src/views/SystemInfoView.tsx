@@ -2,7 +2,15 @@ import React, { useState } from 'react';
 import { Layers, Server, Globe, Code2, Database, GitBranch, Cpu, Shield, ChevronDown, ChevronUp } from 'lucide-react';
 
 export default function SystemInfoView() {
-  const [showAllLogs, setShowAllLogs] = useState(false);
+  const [showV100Logs, setShowV100Logs] = useState(false);
+  const [showV111Logs, setShowV111Logs] = useState(false);
+
+  const v120Items = [
+    '· 施泰纳树算法改为后端计算：前端直接调用 C++ 接口，移除前端动画和复杂计算逻辑',
+    '· 修复后端 Steiner 树算法缺陷：完全替换高连接度节点，而非仅删除两条边',
+    '· 优化施泰纳树算法性能：每个城市只检查一次，避免冗余计算',
+    '· 后端 API 返回格式标准化：统一使用 totalWeight、source/target、steinerPoints 字段',
+  ];
 
   const v110Items = [
     '· 修复施泰纳树算法前后端结果不一致问题（辅助点数量差异）',
@@ -31,15 +39,18 @@ export default function SystemInfoView() {
     '· 一键启动脚本：web.bat 启动 Web 模式，cli.bat 启动命令行模式',
   ];
 
-  const changelogItems = [...v110Items, ...v100Items];
+  const changelogItems = [...v120Items, ...v110Items, ...v100Items];
 
-  const visibleItems = showAllLogs ? changelogItems : changelogItems.slice(0, 3);
+  // 默认只显示最近版本的部分条目
+  const showAllV100 = showV100Logs;
+  const showAllV111 = showV111Logs;
+
   return (
     <div className="flex-1 flex flex-col min-w-0 overflow-hidden bg-slate-50 h-full">
       {/* Header */}
       <header className="h-16 bg-white border-b border-slate-200 px-6 flex items-center gap-4 shrink-0 z-20">
         <h2 className="text-lg font-semibold text-slate-800">版本详情</h2>
-        <span className="text-xs text-slate-400 bg-slate-100 px-2 py-0.5 rounded">v1.1.0</span>
+        <span className="text-xs text-slate-400 bg-slate-100 px-2 py-0.5 rounded">v1.2.0</span>
       </header>
 
       <main className="flex-1 overflow-y-auto p-8">
@@ -47,7 +58,7 @@ export default function SystemInfoView() {
           {/* Version header */}
           <div className="text-center">
             <h1 className="text-xl font-bold text-slate-800 mb-1">NetMap Studio</h1>
-            <p className="text-slate-400 text-sm">v1.1.0</p>
+            <p className="text-slate-400 text-sm">v1.2.0</p>
           </div>
 
           {/* Tech Stack */}
@@ -96,10 +107,23 @@ export default function SystemInfoView() {
               </div>
             </div>
             <div className="p-6 space-y-6">
-              {/* v1.1.0 */}
+              {/* v1.2.0 */}
               <div className="border-l-2 border-[#ff886f] pl-4">
                 <div className="flex items-center gap-2 mb-3">
-                  <span className="text-xs font-medium text-[#ff886f]">v1.1.0</span>
+                  <span className="text-xs font-medium text-[#ff886f]">v1.2.0</span>
+                  <span className="text-xs text-slate-400">2026-03-29</span>
+                </div>
+                <ul className="text-sm text-slate-600 space-y-1.5">
+                  {v120Items.map((item, i) => (
+                    <li key={i}>{item}</li>
+                  ))}
+                </ul>
+              </div>
+
+              {/* v1.1.0 */}
+              <div className="border-l-2 border-slate-300 pl-4">
+                <div className="flex items-center gap-2 mb-3">
+                  <span className="text-xs font-medium text-slate-500">v1.1.0</span>
                   <span className="text-xs text-slate-400">2026-03-26</span>
                 </div>
                 <ul className="text-sm text-slate-600 space-y-1.5">
@@ -116,7 +140,7 @@ export default function SystemInfoView() {
                   <span className="text-xs text-slate-400">2026-03-23</span>
                 </div>
                 <ul className="text-sm text-slate-600 space-y-1.5">
-                  {showAllLogs ? v100Items.map((item, i) => (
+                  {showV100Logs ? v100Items.map((item, i) => (
                     <li key={i}>{item}</li>
                   )) : v100Items.slice(0, 3).map((item, i) => (
                     <li key={i}>{item}</li>
@@ -124,10 +148,10 @@ export default function SystemInfoView() {
                 </ul>
                 {v100Items.length > 3 && (
                   <button
-                    onClick={() => setShowAllLogs(!showAllLogs)}
+                    onClick={() => setShowV100Logs(!showV100Logs)}
                     className="flex items-center gap-1 mt-3 text-xs text-[#ff886f] hover:text-[#f07a61] transition-colors"
                   >
-                    {showAllLogs ? (
+                    {showV100Logs ? (
                       <>收起 <ChevronUp className="w-3 h-3" /></>
                     ) : (
                       <>展开更多 ({v100Items.length - 3} 条) <ChevronDown className="w-3 h-3" /></>
