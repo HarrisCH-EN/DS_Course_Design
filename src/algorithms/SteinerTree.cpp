@@ -189,20 +189,28 @@ SteinerTreeResult SteinerTree::solve(const Graph& graph) {
                     // 如果费马点落在已有顶点上，说明没有优化空间
                     if (fermat.isVertex) continue;
 
-                    // 使用精确的双精度浮点计算长度，避免整型抹除微小优化
-                    double oldDist = std::hypot(ux - v1x, uy - v1y) + std::hypot(ux - v2x, uy - v2y);
-                    double newDist = std::hypot(fermat.x - ux, fermat.y - uy) + 
-                                     std::hypot(fermat.x - v1x, fermat.y - v1y) + 
-                                     std::hypot(fermat.x - v2x, fermat.y - v2y);
+                    // 计算旧连接的总长度（u 到所有邻居）
+                    double oldTotalDist = 0.0;
+                    for (int neighbor : neighbors) {
+                        double nx = posMap[neighbor].first, ny = posMap[neighbor].second;
+                        oldTotalDist += std::hypot(ux - nx, uy - ny);
+                    }
+
+                    // 计算新连接的总长度（Steiner 点到所有邻居）
+                    double newTotalDist = 0.0;
+                    for (int neighbor : neighbors) {
+                        double nx = posMap[neighbor].first, ny = posMap[neighbor].second;
+                        newTotalDist += std::hypot(fermat.x - nx, fermat.y - ny);
+                    }
 
                     // 如果新连接方式更短（留出 1e-4 的裕度防止浮点波动）
-                    if (newDist < oldDist - 1e-4) {
-                        
-                        // 生成新图边集
+                    if (newTotalDist < oldTotalDist - 1e-4) {
+
+                        // 生成新图边集：删除所有连接到 u 的边，用 Steiner 点替代
                         std::vector<Edge> newEdges;
                         for (const auto& e : bestEdges) {
-                            // 剔除旧的两条边 (u, v1) 和 (u, v2)
-                            if (!isSameEdge(e, u, v1) && !isSameEdge(e, u, v2)) {
+                            // 保留不涉及 u 的边
+                            if (e.from != u && e.to != u) {
                                 newEdges.push_back(e);
                             }
                         }
@@ -211,10 +219,12 @@ SteinerTreeResult SteinerTree::solve(const Graph& graph) {
                         int sId = nextSteinerId--;
                         posMap[sId] = {fermat.x, fermat.y};
 
-                        // 增加新的三条边连向费马点
-                        newEdges.push_back(Edge(sId, u, (int)std::round(std::hypot(fermat.x - ux, fermat.y - uy))));
-                        newEdges.push_back(Edge(sId, v1, (int)std::round(std::hypot(fermat.x - v1x, fermat.y - v1y))));
-                        newEdges.push_back(Edge(sId, v2, (int)std::round(std::hypot(fermat.x - v2x, fermat.y - v2y))));
+                        // 为每个邻居添加 Steiner 点到邻居的边
+                        for (int neighbor : neighbors) {
+                            double nx = posMap[neighbor].first, ny = posMap[neighbor].second;
+                            int dist = (int)std::round(std::hypot(fermat.x - nx, fermat.y - ny));
+                            newEdges.push_back(Edge(sId, neighbor, dist));
+                        }
 
                         // 标准替换操作数学上能绝对保证连通性，直接应用更新
                         bestEdges = newEdges;
