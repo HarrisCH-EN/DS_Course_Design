@@ -3173,12 +3173,3 @@ SteinerTreeResult SteinerTree::solve(Graph* graph, const std::vector<int>& keyId
 
 ---
 
-**文档完成！** 🎉
-
-这份文档涵盖了项目的所有核心代码和设计思路，从数据结构到算法实现，从前端渲染到后端服务，应该能帮助你完全理解整个系统的工作原理。
-
-
-
-<img src="C:\Users\CHQ\AppData\Roaming\Typora\typora-user-images\image-20260331165448281.png" alt="image-20260331165448281" style="zoom:55%;" /><img src="C:\Users\CHQ\AppData\Roaming\Typora\typora-user-images\image-20260331165554232.png" alt="image-20260331165554232" style="zoom: 50%;" />
-
-<img src="C:\Users\CHQ\AppData\Roaming\Typora\typora-user-images\image-20260331165708458.png" alt="image-20260331165708458" style="zoom:53%;" />
